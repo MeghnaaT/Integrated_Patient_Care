@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="ipcms-auth-wrapper d-flex align-items-center justify-content-center">
+  <div class="ipcms-auth-card card shadow-lg border-0">
+
+    <!-- Card Header -->
+    <div class="card-header ipcms-auth-header text-white text-center py-4 border-0">
+      <div class="ipcms-auth-icon mb-2">
+        <i class="bi bi-hospital-fill fs-1"></i>
+      </div>
+      <h1 class="h4 fw-bold mb-0">Welcome Back</h1>
+      <p class="small opacity-75 mb-0">Sign in to your IPCMS account</p>
+    </div>
+
+    <!-- Card Body -->
+    <div class="card-body px-4 py-4">
+      <form method="POST" action="{{ url_for('auth.login') }}" novalidate id="loginForm">
+        {{ form.hidden_tag() }}
+
+        <!-- Email -->
+        <div class="mb-3">
+          {{ form.email.label(class='form-label fw-semibold') }}
+          <div class="input-group">
+            <span class="input-group-text bg-light border-end-0">
+              <i class="bi bi-envelope text-muted"></i>
+            </span>
+            {{ form.email(class='form-control border-start-0 ps-0' + (' is-invalid' if form.email.errors else '')) }}
+            {% if form.email.errors %}
+              <div class="invalid-feedback">{{ form.email.errors[0] }}</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Password -->
+        <div class="mb-3">
+          {{ form.password.label(class='form-label fw-semibold') }}
+          <div class="input-group">
+            <span class="input-group-text bg-light border-end-0">
+              <i class="bi bi-lock text-muted"></i>
+            </span>
+            {{ form.password(class='form-control border-start-0 ps-0 border-end-0' + (' is-invalid' if form.password.errors else ''), id='passwordField') }}
+            <button class="btn btn-outline-secondary border-start-0" type="button" id="togglePassword"
+                    title="Show/hide password" aria-label="Toggle password visibility">
+              <i class="bi bi-eye" id="toggleIcon"></i>
+            </button>
+            {% if form.password.errors %}
+              <div class="invalid-feedback">{{ form.password.errors[0] }}</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Remember Me -->
+        <div class="mb-4 d-flex align-items-center">
+          <div class="form-check">
+            {{ form.remember_me(class='form-check-input', id='rememberMe') }}
+            {{ form.remember_me.label(class='form-check-label text-muted small', for='rememberMe') }}
+          </div>
+        </div>
+
+        <!-- Submit -->
+        {{ form.submit(class='btn ipcms-btn-primary w-100 py-2 fw-semibold', id='submitBtn') }}
+      </form>
+
+      <hr class="my-3 text-muted"/>
+
+      <div class="text-center">
+        <p class="text-muted small mb-0">
+          Don't have an account?
+          <a href="{{ url_for('auth.register') }}" class="text-decoration-none fw-semibold">
+            Create one
+          </a>
+        </p>
+      </div>
+    </div>
+
+    <!-- Default credentials hint for development -->
+    <div class="card-footer bg-light border-0 px-4 py-3">
+      <p class="text-muted small mb-1 fw-semibold">
+        <i class="bi bi-info-circle me-1"></i>Default Test Credentials
+      </p>
+      <div class="row g-1 small text-muted">
+        <div class="col-6">
+          <code>admin@ipcms.com</code> / <code>admin123</code>
+        </div>
+        <div class="col-6">
+          <code>doctor@ipcms.com</code> / <code>doctor123</code>
+        </div>
+        <div class="col-6">
+          <code>nurse@ipcms.com</code> / <code>nurse123</code>
+        </div>
+        <div class="col-6">
+          <code>patient@ipcms.com</code> / <code>patient123</code>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Toggle password visibility
+  const toggleBtn  = document.getElementById('togglePassword');
+  const toggleIcon = document.getElementById('toggleIcon');
+  const pwdField   = document.getElementById('passwordField');
+
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', () => {
+      const isText = pwdField.type === 'text';
+      pwdField.type = isText ? 'password' : 'text';
+      toggleIcon.className = isText ? 'bi bi-eye' : 'bi bi-eye-slash';
+    });
+  }
+</script>
+{% endblock %}

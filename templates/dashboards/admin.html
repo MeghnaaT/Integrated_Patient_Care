@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+
+  <!-- Page Header -->
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h2 class="fw-bold mb-0"><i class="bi bi-speedometer2 me-2 text-primary"></i>Admin Dashboard</h2>
+      <p class="text-muted small mb-0">System overview &amp; quick statistics</p>
+    </div>
+    <span class="badge bg-primary-subtle text-primary px-3 py-2 rounded-pill fs-6">
+      <i class="bi bi-person-gear me-1"></i>Administrator
+    </span>
+  </div>
+
+  <!-- Stats Cards Row -->
+  <div class="row g-4 mb-4">
+    <!-- Patients -->
+    <div class="col-sm-6 col-xl-3">
+      <div class="card ipcms-stat-card border-0 shadow-sm h-100">
+        <div class="card-body d-flex align-items-center gap-3">
+          <div class="ipcms-stat-icon bg-primary-subtle text-primary">
+            <i class="bi bi-people-fill fs-3"></i>
+          </div>
+          <div>
+            <p class="text-muted small mb-0 fw-semibold text-uppercase tracking-wide">Total Patients</p>
+            <h3 class="fw-bold mb-0 display-6">{{ total_patients }}</h3>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Doctors -->
+    <div class="col-sm-6 col-xl-3">
+      <div class="card ipcms-stat-card border-0 shadow-sm h-100">
+        <div class="card-body d-flex align-items-center gap-3">
+          <div class="ipcms-stat-icon bg-success-subtle text-success">
+            <i class="bi bi-person-badge-fill fs-3"></i>
+          </div>
+          <div>
+            <p class="text-muted small mb-0 fw-semibold text-uppercase tracking-wide">Total Doctors</p>
+            <h3 class="fw-bold mb-0 display-6">{{ total_doctors }}</h3>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Nurses -->
+    <div class="col-sm-6 col-xl-3">
+      <div class="card ipcms-stat-card border-0 shadow-sm h-100">
+        <div class="card-body d-flex align-items-center gap-3">
+          <div class="ipcms-stat-icon bg-warning-subtle text-warning">
+            <i class="bi bi-heart-pulse-fill fs-3"></i>
+          </div>
+          <div>
+            <p class="text-muted small mb-0 fw-semibold text-uppercase tracking-wide">Total Nurses</p>
+            <h3 class="fw-bold mb-0 display-6">{{ total_nurses }}</h3>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Appointments -->
+    <div class="col-sm-6 col-xl-3">
+      <div class="card ipcms-stat-card border-0 shadow-sm h-100">
+        <div class="card-body d-flex align-items-center gap-3">
+          <div class="ipcms-stat-icon bg-info-subtle text-info">
+            <i class="bi bi-calendar-check-fill fs-3"></i>
+          </div>
+          <div>
+            <p class="text-muted small mb-0 fw-semibold text-uppercase tracking-wide">Total Appointments</p>
+            <h3 class="fw-bold mb-0 display-6">{{ total_appts }}</h3>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Links -->
+  <div class="row g-3">
+    <div class="col-12">
+      <h5 class="fw-bold text-muted mb-3"><i class="bi bi-grid me-2"></i>Quick Actions</h5>
+    </div>
+    {% set quick_links = [
+      ('bi-person-plus',       'primary',   'Add Patient',       '#'),
+      ('bi-person-badge',      'success',   'Manage Doctors',    '#'),
+      ('bi-calendar-plus',     'info',      'New Appointment',   '#'),
+      ('bi-file-medical',      'warning',   'Medical Records',   '#'),
+      ('bi-bar-chart-line',    'secondary', 'Reports',           '#'),
+      ('bi-gear',              'dark',      'System Settings',   '#'),
+    ] %}
+    {% for icon, color, label, href in quick_links %}
+    <div class="col-sm-6 col-md-4 col-lg-2">
+      <a href="{{ href }}" class="card ipcms-quick-card border-0 shadow-sm text-decoration-none h-100">
+        <div class="card-body text-center py-3">
+          <div class="ipcms-stat-icon bg-{{ color }}-subtle text-{{ color }} mx-auto mb-2">
+            <i class="bi {{ icon }} fs-4"></i>
+          </div>
+          <p class="small fw-semibold text-dark mb-0">{{ label }}</p>
+        </div>
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}

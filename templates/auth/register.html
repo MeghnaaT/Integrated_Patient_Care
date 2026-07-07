@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="ipcms-auth-wrapper d-flex align-items-center justify-content-center py-4">
+  <div class="ipcms-auth-card card shadow-lg border-0" style="max-width:500px;">
+
+    <!-- Card Header -->
+    <div class="card-header ipcms-auth-header text-white text-center py-4 border-0">
+      <div class="ipcms-auth-icon mb-2">
+        <i class="bi bi-person-plus-fill fs-1"></i>
+      </div>
+      <h1 class="h4 fw-bold mb-0">Create Your Account</h1>
+      <p class="small opacity-75 mb-0">Register as a patient to book appointments</p>
+    </div>
+
+    <!-- Card Body -->
+    <div class="card-body px-4 py-4">
+      <form method="POST" action="{{ url_for('auth.register') }}" novalidate id="registerForm">
+        {{ form.hidden_tag() }}
+
+        <!-- Username -->
+        <div class="mb-3">
+          {{ form.username.label(class='form-label fw-semibold') }}
+          <div class="input-group">
+            <span class="input-group-text bg-light border-end-0">
+              <i class="bi bi-person text-muted"></i>
+            </span>
+            {{ form.username(class='form-control border-start-0 ps-0' + (' is-invalid' if form.username.errors else '')) }}
+            {% if form.username.errors %}
+              <div class="invalid-feedback">{{ form.username.errors[0] }}</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Email -->
+        <div class="mb-3">
+          {{ form.email.label(class='form-label fw-semibold') }}
+          <div class="input-group">
+            <span class="input-group-text bg-light border-end-0">
+              <i class="bi bi-envelope text-muted"></i>
+            </span>
+            {{ form.email(class='form-control border-start-0 ps-0' + (' is-invalid' if form.email.errors else '')) }}
+            {% if form.email.errors %}
+              <div class="invalid-feedback">{{ form.email.errors[0] }}</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Password -->
+        <div class="mb-3">
+          {{ form.password.label(class='form-label fw-semibold') }}
+          <div class="input-group">
+            <span class="input-group-text bg-light border-end-0">
+              <i class="bi bi-lock text-muted"></i>
+            </span>
+            {{ form.password(class='form-control border-start-0 ps-0' + (' is-invalid' if form.password.errors else ''), id='passwordField') }}
+            {% if form.password.errors %}
+              <div class="invalid-feedback">{{ form.password.errors[0] }}</div>
+            {% endif %}
+          </div>
+          <!-- Password strength bar -->
+          <div class="progress mt-1" style="height:4px;" id="strengthBar" hidden>
+            <div class="progress-bar" id="strengthFill" role="progressbar" style="width:0%"></div>
+          </div>
+          <small class="text-muted" id="strengthLabel"></small>
+        </div>
+
+        <!-- Confirm Password -->
+        <div class="mb-4">
+          {{ form.confirm_password.label(class='form-label fw-semibold') }}
+          <div class="input-group">
+            <span class="input-group-text bg-light border-end-0">
+              <i class="bi bi-lock-fill text-muted"></i>
+            </span>
+            {{ form.confirm_password(class='form-control border-start-0 ps-0' + (' is-invalid' if form.confirm_password.errors else ''), id='confirmField') }}
+            {% if form.confirm_password.errors %}
+              <div class="invalid-feedback">{{ form.confirm_password.errors[0] }}</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Submit -->
+        {{ form.submit(class='btn ipcms-btn-primary w-100 py-2 fw-semibold') }}
+      </form>
+
+      <hr class="my-3 text-muted"/>
+
+      <div class="text-center">
+        <p class="text-muted small mb-0">
+          Already have an account?
+          <a href="{{ url_for('auth.login') }}" class="text-decoration-none fw-semibold">Sign in</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Simple client-side password strength indicator
+  const pwdField    = document.getElementById('passwordField');
+  const confirmFld  = document.getElementById('confirmField');
+  const strengthBar = document.getElementById('strengthBar');
+  const strengthFil = document.getElementById('strengthFill');
+  const strengthLbl = document.getElementById('strengthLabel');
+
+  const levels = [
+    { max: 5,  label: 'Too short',  cls: 'bg-danger',  pct: 10  },
+    { max: 7,  label: 'Weak',       cls: 'bg-warning', pct: 30  },
+    { max: 11, label: 'Fair',       cls: 'bg-info',    pct: 60  },
+    { max: Infinity, label: 'Strong', cls: 'bg-success', pct: 100 },
+  ];
+
+  if (pwdField) {
+    pwdField.addEventListener('input', () => {
+      const len = pwdField.value.length;
+      if (len === 0) { strengthBar.hidden = true; strengthLbl.textContent = ''; return; }
+      strengthBar.hidden = false;
+      const lvl = levels.find(l => len <= l.max);
+      strengthFil.style.width = lvl.pct + '%';
+      strengthFil.className = 'progress-bar ' + lvl.cls;
+      strengthLbl.textContent = lvl.label;
+    });
+  }
+</script>
+{% endblock %}

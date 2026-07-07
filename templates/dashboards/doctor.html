@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h2 class="fw-bold mb-0"><i class="bi bi-clipboard2-pulse me-2 text-success"></i>Doctor Dashboard</h2>
+      {% if doctor %}
+        <p class="text-muted small mb-0">Dr. {{ doctor.full_name }} &mdash; {{ doctor.specialization }}</p>
+      {% endif %}
+    </div>
+    <span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill fs-6">
+      <i class="bi bi-person-badge me-1"></i>Doctor
+    </span>
+  </div>
+
+  <div class="row g-4">
+    <!-- Upcoming Appointments -->
+    <div class="col-lg-7">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-transparent border-bottom-0 pt-3 pb-0 px-4">
+          <h6 class="fw-bold mb-0"><i class="bi bi-calendar-week me-2 text-success"></i>Upcoming Appointments</h6>
+        </div>
+        <div class="card-body px-4">
+          {% if upcoming_appointments %}
+            <div class="table-responsive">
+              <table class="table table-hover align-middle small">
+                <thead class="table-light">
+                  <tr>
+                    <th>Patient</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for appt in upcoming_appointments %}
+                  <tr>
+                    <td>
+                      <div class="ipcms-avatar-sm me-2 d-inline-flex">P</div>
+                      Patient #{{ appt.patient_id }}
+                    </td>
+                    <td>{{ appt.appointment_date.strftime('%d %b %Y') }}</td>
+                    <td>{{ appt.appointment_time.strftime('%I:%M %p') }}</td>
+                    <td>
+                      <span class="badge bg-success-subtle text-success">{{ appt.status }}</span>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="text-center py-5 text-muted">
+              <i class="bi bi-calendar-x fs-1 d-block mb-2"></i>
+              No upcoming appointments
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Medical Records -->
+    <div class="col-lg-5">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-transparent border-bottom-0 pt-3 pb-0 px-4">
+          <h6 class="fw-bold mb-0"><i class="bi bi-file-medical me-2 text-info"></i>Recent EHR Entries</h6>
+        </div>
+        <div class="card-body px-4">
+          {% if recent_records %}
+            {% for rec in recent_records %}
+            <div class="ipcms-record-item mb-3 p-3 rounded-3 bg-light">
+              <p class="small fw-semibold mb-1 text-dark">Patient #{{ rec.patient_id }}</p>
+              <p class="small text-muted mb-1">
+                <i class="bi bi-calendar3 me-1"></i>{{ rec.visit_date.strftime('%d %b %Y') }}
+              </p>
+              <p class="small mb-0 text-truncate" title="{{ rec.diagnosis }}">
+                <i class="bi bi-clipboard-check me-1 text-info"></i>{{ rec.diagnosis }}
+              </p>
+            </div>
+            {% endfor %}
+          {% else %}
+            <div class="text-center py-5 text-muted">
+              <i class="bi bi-file-earmark-medical fs-1 d-block mb-2"></i>
+              No records yet
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

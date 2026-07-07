@@ -1,0 +1,148 @@
+/* =============================================================================
+   Custom IPCMS Design System (Bootstrap 5 based)
+   =============================================================================
+   The classes below complement Bootstrap utilities and provide the premium
+   look‑and‑feel described in the project brief (glassmorphism, subtle gradients,
+   modern typography, etc.).
+*/
+
+/* ---------------------------------------------------------------
+   Typography – use Google Font "Inter" – loaded via <link> in base.html
+   --------------------------------------------------------------- */
+body {
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+}
+
+/* ---------------------------------------------------------------
+   Navbar – dark glassmorphism effect
+   --------------------------------------------------------------- */
+.ipcms-navbar {
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: saturate(180%) blur(15px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+/* ---------------------------------------------------------------
+   Avatar – circles with gradient background
+   --------------------------------------------------------------- */
+.ipcms-avatar-sm, .ipcms-avatar-lg {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    color: #fff;
+    font-weight: 600;
+    background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+}
+.ipcms-avatar-sm {
+    width: 32px;
+    height: 32px;
+    font-size: 0.85rem;
+}
+.ipcms-avatar-lg {
+    width: 64px;
+    height: 64px;
+    font-size: 1.5rem;
+}
+
+/* ---------------------------------------------------------------
+   Statistic cards – subtle elevation and border radius
+   --------------------------------------------------------------- */
+.ipcms-stat-card {
+    border-radius: 0.75rem;
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: saturate(180%) blur(8px);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.ipcms-stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 12px rgba(0,0,0,0.12);
+}
+.ipcms-stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+/* ---------------------------------------------------------------
+   Primary button – consistent across pages
+   --------------------------------------------------------------- */
+.ipcms-btn-primary {
+    background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+    color: #fff;
+    border: none;
+    border-radius: 0.5rem;
+    transition: background 0.3s ease, transform 0.2s ease;
+}
+.ipcms-btn-primary:hover {
+    background: linear-gradient(135deg, #5a0cab 0%, #1c64e0 100%);
+    transform: translateY(-2px);
+}
+
+/* ---------------------------------------------------------------
+   Quick‑action cards – clickable and hover‑friendly
+   --------------------------------------------------------------- */
+.ipcms-quick-card {
+    border-radius: 0.75rem;
+    background: rgba(255,255,255,0.9);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.ipcms-quick-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+}
+
+/* ---------------------------------------------------------------
+   Record items – tiny cards for medical entries
+   --------------------------------------------------------------- */
+.ipcms-record-item {
+    background: rgba(255,255,255,0.95);
+    border-left: 4px solid var(--bs-primary);
+    transition: background 0.2s ease;
+}
+.ipcms-record-item:hover {
+    background: rgba(255,255,255,0.99);
+}
+
+/* ---------------------------------------------------------------
+   Auth pages – centered cards with subtle depth
+   --------------------------------------------------------------- */
+.ipcms-auth-wrapper {
+    min-height: calc(100vh - 56px); /* navbar height */
+    background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%);
+}
+.ipcms-auth-card {
+    width: 100%;
+    max-width: 460px;
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+}
+.ipcms-auth-header {
+    background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+    padding: 2rem 1.5rem;
+}
+
+/* ---------------------------------------------------------------
+   Footer – minimal with glass effect
+   --------------------------------------------------------------- */
+.ipcms-footer {
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: saturate(180%) blur(10px);
+    font-size: 0.9rem;
+}
+
+/* ---------------------------------------------------------------
+   Misc utilities – tiny tweaks used across templates
+   --------------------------------------------------------------- */
+.text-truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
