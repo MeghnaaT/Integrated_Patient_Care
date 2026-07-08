@@ -45,23 +45,95 @@
 
             {% if role == 'Admin' %}
               <li class="nav-item">
-                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('admin') %}active{% endif %}"
+                <a class="nav-link {% if request.endpoint and request.endpoint == 'admin.dashboard' %}active{% endif %}"
                    href="{{ url_for('admin.dashboard') }}">
                   <i class="bi bi-speedometer2 me-1"></i>Dashboard
                 </a>
               </li>
+              <li class="nav-item">
+                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('patient') and not request.endpoint.endswith('dashboard') %}active{% endif %}"
+                   href="{{ url_for('patient.list_patients_view') }}">
+                  <i class="bi bi-people me-1"></i>Patients
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('doctor') and not request.endpoint.endswith('dashboard') %}active{% endif %}"
+                   href="{{ url_for('doctor.list_doctors_view') }}">
+                  <i class="bi bi-person-badge me-1"></i>Doctors
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('nurse') and not request.endpoint.endswith('dashboard') %}active{% endif %}"
+                   href="{{ url_for('nurse.list_nurses_view') }}">
+                  <i class="bi bi-heart-pulse-fill me-1"></i>Nurses
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('reports') %}active{% endif %}"
+                   href="{{ url_for('reports.view_reports') }}">
+                  <i class="bi bi-file-earmark-bar-graph me-1"></i>Reports
+                </a>
+              </li>
             {% elif role == 'Doctor' %}
               <li class="nav-item">
-                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('doctor') %}active{% endif %}"
+                <a class="nav-link {% if request.endpoint and request.endpoint == 'doctor.dashboard' %}active{% endif %}"
                    href="{{ url_for('doctor.dashboard') }}">
                   <i class="bi bi-clipboard2-pulse me-1"></i>Dashboard
                 </a>
               </li>
+              <li class="nav-item">
+                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('patient') and not request.endpoint.endswith('dashboard') %}active{% endif %}"
+                   href="{{ url_for('patient.list_patients_view') }}">
+                  <i class="bi bi-people me-1"></i>Patients
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('doctor') and not request.endpoint.endswith('dashboard') %}active{% endif %}"
+                   href="{{ url_for('doctor.list_doctors_view') }}">
+                  <i class="bi bi-person-badge me-1"></i>Doctors
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('nurse') and not request.endpoint.endswith('dashboard') %}active{% endif %}"
+                   href="{{ url_for('nurse.list_nurses_view') }}">
+                  <i class="bi bi-heart-pulse-fill me-1"></i>Nurses
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('reports') %}active{% endif %}"
+                   href="{{ url_for('reports.view_reports') }}">
+                  <i class="bi bi-file-earmark-bar-graph me-1"></i>Reports
+                </a>
+              </li>
             {% elif role == 'Nurse' %}
               <li class="nav-item">
-                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('nurse') %}active{% endif %}"
+                <a class="nav-link {% if request.endpoint and request.endpoint == 'nurse.dashboard' %}active{% endif %}"
                    href="{{ url_for('nurse.dashboard') }}">
                   <i class="bi bi-heart-pulse me-1"></i>Dashboard
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('patient') and not request.endpoint.endswith('dashboard') %}active{% endif %}"
+                   href="{{ url_for('patient.list_patients_view') }}">
+                  <i class="bi bi-people me-1"></i>Patients
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('doctor') and not request.endpoint.endswith('dashboard') %}active{% endif %}"
+                   href="{{ url_for('doctor.list_doctors_view') }}">
+                  <i class="bi bi-person-badge me-1"></i>Doctors
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('nurse') and not request.endpoint.endswith('dashboard') %}active{% endif %}"
+                   href="{{ url_for('nurse.list_nurses_view') }}">
+                  <i class="bi bi-heart-pulse-fill me-1"></i>Nurses
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('reports') %}active{% endif %}"
+                   href="{{ url_for('reports.view_reports') }}">
+                  <i class="bi bi-file-earmark-bar-graph me-1"></i>Reports
                 </a>
               </li>
             {% elif role == 'Patient' %}

@@ -72,6 +72,8 @@ def create_app(config_name: str = 'default') -> Flask:
     from routes.doctor import doctor_bp
     from routes.nurse import nurse_bp
     from routes.patient import patient_bp
+    from routes.appointment import appointment_bp
+    from routes.reports import reports_bp
 
     app.register_blueprint(dashboard_bp)                      # / and /dashboard
     app.register_blueprint(auth_bp,    url_prefix='/auth')    # /auth/login  /auth/logout
@@ -79,6 +81,8 @@ def create_app(config_name: str = 'default') -> Flask:
     app.register_blueprint(doctor_bp,  url_prefix='/doctor')  # /doctor/*
     app.register_blueprint(nurse_bp,   url_prefix='/nurse')   # /nurse/*
     app.register_blueprint(patient_bp, url_prefix='/patient') # /patient/*
+    app.register_blueprint(appointment_bp, url_prefix='/appointment') # /appointment/*
+    app.register_blueprint(reports_bp, url_prefix='/reports') # /reports/*
 
     # -------------------------------------------------------------------------
     # HTTP Error Handlers

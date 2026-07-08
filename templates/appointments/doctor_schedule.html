@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+
+  <!-- Header & Back -->
+  <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+    <div>
+      <a href="{{ url_for('doctor.list_doctors_view') }}" class="btn btn-outline-secondary btn-sm mb-2">
+        <i class="bi bi-arrow-left me-1"></i>Back to Directory
+      </a>
+      <h2 class="fw-bold mb-0 text-dark"><i class="bi bi-calendar3 me-2 text-success"></i>Doctor Schedule</h2>
+      <p class="text-muted small mb-0">Consultation agenda for Dr. {{ doctor.full_name }}</p>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Left Column: Doctor Profile Summary & Date Selector -->
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm ipcms-stat-card mb-4">
+        <div class="card-body">
+          <div class="d-flex align-items-center gap-3 mb-3 pb-3 border-bottom">
+            <div class="ipcms-avatar-sm" style="width: 48px; height: 48px; font-size: 1.2rem; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+              {{ doctor.first_name[0] }}{{ doctor.last_name[0] }}
+            </div>
+            <div>
+              <h5 class="fw-bold mb-0">Dr. {{ doctor.full_name }}</h5>
+              <span class="small text-muted">{{ doctor.specialization }}</span>
+            </div>
+          </div>
+
+          <p class="small text-muted mb-2"><i class="bi bi-clock me-1 text-primary"></i>Availability Hours:</p>
+          <p class="fw-bold text-dark mb-4">{{ doctor.available_time }}</p>
+
+          <!-- Date Selection Form -->
+          <form method="GET" action="{{ url_for('appointment.doctor_schedule_view', doctor_id=doctor.id) }}">
+            <label class="form-label small fw-semibold text-muted mb-2">Select Target Date</label>
+            <div class="input-group">
+              <input type="date" name="date" value="{{ date_str }}" class="form-control">
+              <button type="submit" class="btn btn-success fw-semibold">Go</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Agenda Timeline -->
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm ipcms-stat-card h-100">
+        <div class="card-header bg-transparent border-bottom-0 pt-4 pb-0 px-4">
+          <h5 class="fw-bold mb-0 text-dark">Schedule for {{ target_date.strftime('%A, %d %b %Y') }}</h5>
+          <p class="text-muted small mb-0">Chronological consultation slots</p>
+        </div>
+        <div class="card-body px-4 pt-3">
+          {% if appointments %}
+            <div class="table-responsive">
+              <table class="table table-hover align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th>Time</th>
+                    <th>Patient</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for appt in appointments %}
+                  <tr>
+                    <td class="fw-bold text-primary">
+                      <i class="bi bi-clock me-1"></i>{{ appt.appointment_time.strftime('%I:%M %p') }}
+                    </td>
+                    <td>
+                      <div class="d-flex align-items-center gap-2">
+                        <div class="ipcms-avatar-sm flex-shrink-0" style="width: 28px; height: 28px; font-size: 0.75rem;">
+                          {{ appt.patient.first_name[0] }}{{ appt.patient.last_name[0] }}
+                        </div>
+                        <div>
+                          <a href="{{ url_for('patient.view_patient_view', patient_id=appt.patient_id) }}" class="fw-semibold text-decoration-none text-dark hover-primary">{{ appt.patient.full_name }}</a>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      {% set sc = {'Confirmed':'success','Completed':'info','Cancelled':'danger','Pending':'warning'} %}
+                      <span class="badge bg-{{ sc.get(appt.status,'secondary') }}-subtle text-{{ sc.get(appt.status,'secondary') }} px-2 py-1 rounded-pill">
+                        {{ appt.status }}
+                      </span>
+                    </td>
+                    <td class="text-end">
+                      {% if current_user.role.name in ['Admin', 'Nurse'] %}
+                      <div class="d-flex justify-content-end gap-1">
+                        <a href="{{ url_for('appointment.edit_appointment_view', appointment_id=appt.id) }}" class="btn btn-outline-primary btn-sm" title="Reschedule">
+                          <i class="bi bi-calendar-event"></i>
+                        </a>
+                        <form action="{{ url_for('appointment.cancel_appointment_view', appointment_id=appt.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to cancel Dr. {{ doctor.last_name }}\'s appointment with {{ appt.patient.full_name }}?');">
+                          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                          <button type="submit" class="btn btn-outline-danger btn-sm" title="Cancel">
+                            <i class="bi bi-x-circle"></i>
+                          </button>
+                        </form>
+                      </div>
+                      {% else %}
+                        -
+                      {% endif %}
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="text-center py-5 text-muted">
+              <i class="bi bi-calendar2-x fs-1 d-block mb-3 text-secondary"></i>
+              <p class="mb-0">No consultations scheduled for Dr. {{ doctor.full_name }} on this date.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

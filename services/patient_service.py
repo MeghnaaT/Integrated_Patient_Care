@@ -17,12 +17,59 @@ from models.medical_record import MedicalRecord
 # ---------------------------------------------------------------------------
 
 def create_patient(data: dict) -> Patient:
-    """Create and persist a new Patient.
+    """Create and persist a new Patient along with their User credential account.
 
     ``data`` should contain keys matching the Patient model fields. The caller is
     responsible for validation (WTForms) before invoking this function.
     """
-    patient = Patient(**data)
+    from models.user import User
+    from models.role import Role
+    from werkzeug.security import generate_password_hash
+    import datetime
+
+    # 1. Check if user already exists or create new
+    email = data.get('email', '').lower().strip()
+    first_name = data.get('first_name', '').strip()
+    last_name = data.get('last_name', '').strip()
+
+    # Generate a unique username based on first_name and last_name
+    base_username = f"pat_{first_name.lower()}_{last_name.lower()}".replace(" ", "")[:40]
+    if not base_username:
+        base_username = f"pat_{email.split('@')[0]}"[:40]
+    
+    username = base_username
+    counter = 1
+    while User.query.filter_by(username=username).first():
+        username = f"{base_username}{counter}"
+        counter += 1
+
+    # Check if a user with the email already exists
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        patient_role = Role.query.filter_by(name='Patient').first()
+        role_id = patient_role.id if patient_role else 4
+        
+        user = User(
+            username=username,
+            email=email,
+            password_hash=generate_password_hash('patient123', method='scrypt'),
+            role_id=role_id,
+            is_active=True
+        )
+        db.session.add(user)
+        db.session.flush()  # Populates user.id without committing yet
+
+    # 2. Create the patient profile linked to the User
+    patient_fields = {
+        'first_name', 'last_name', 'age', 'gender', 'blood_group', 
+        'phone_number', 'email', 'address', 'medical_history', 'registered_on'
+    }
+    patient_data = {k: v for k, v in data.items() if k in patient_fields}
+    patient_data['id'] = user.id
+    if 'registered_on' not in patient_data or not patient_data['registered_on']:
+        patient_data['registered_on'] = datetime.date.today()
+
+    patient = Patient(**patient_data)
     db.session.add(patient)
     db.session.commit()
     return patient
@@ -31,27 +78,41 @@ def create_patient(data: dict) -> Patient:
 def update_patient(patient_id: int, data: dict) -> Patient:
     """Update an existing patient with ``data`` and return the refreshed model."""
     patient = Patient.query.get_or_404(patient_id)
+    
+    patient_fields = {
+        'first_name', 'last_name', 'age', 'gender', 'blood_group', 
+        'phone_number', 'email', 'address', 'medical_history', 'registered_on'
+    }
+    
     for attr, value in data.items():
-        setattr(patient, attr, value)
+        if attr in patient_fields:
+            setattr(patient, attr, value)
+            
+    # Sync email with user account if modified
+    if 'email' in data and patient.user:
+        patient.user.email = data['email'].lower().strip()
+        
     db.session.commit()
     return patient
 
 
 def delete_patient(patient_id: int) -> None:
-    """Soft‑delete a patient by setting ``is_active`` to ``False``.
+    """Soft‑delete a patient by setting ``is_active`` to ``False`` on their User account.
 
     A hard delete could be performed with ``db.session.delete`` but a soft delete
     preserves historical medical records while removing the patient from active
     lists.
     """
     patient = Patient.query.get_or_404(patient_id)
-    patient.is_active = False
+    if patient.user:
+        patient.user.is_active = False
     db.session.commit()
 
 
 def get_patient(patient_id: int) -> Patient:
     """Return a single patient (including lazy‑loaded relationships)."""
     return Patient.query.get_or_404(patient_id)
+
 
 # ---------------------------------------------------------------------------
 # List / Search / Pagination
@@ -71,7 +132,7 @@ def list_patients(
       email and phone_number.
     """
     # Whitelist allowed sort columns to prevent SQL injection via ORM
-    allowed_sorts = {"first_name", "last_name", "age", "created_on"}
+    allowed_sorts = {"first_name", "last_name", "age", "registered_on"}
     if sort_by not in allowed_sorts:
         sort_by = "last_name"
     order_clause = getattr(Patient, sort_by)
@@ -80,7 +141,8 @@ def list_patients(
     else:
         order_clause = order_clause.asc()
 
-    query = Patient.query.filter(Patient.is_active.is_(True))
+    from models.user import User
+    query = Patient.query.join(User).filter(User.is_active.is_(True))
     if search_term:
         like = f"%{search_term}%"
         query = query.filter(

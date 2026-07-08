@@ -1,96 +1,269 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="ipcms-auth-wrapper d-flex align-items-center justify-content-center">
-  <div class="ipcms-auth-card card shadow-lg border-0">
+<div class="container-fluid py-5 bg-light" style="min-height: calc(100vh - 56px);">
+  
+  <!-- System Header -->
+  <div class="text-center mb-5">
+    <h1 class="fw-bold text-dark mb-1">Integrated Patient Care Management System</h1>
+    <p class="text-muted fs-5">Please Login to Continue</p>
+  </div>
 
-    <!-- Card Header -->
-    <div class="card-header ipcms-auth-header text-white text-center py-4 border-0">
-      <div class="ipcms-auth-icon mb-2">
-        <i class="bi bi-hospital-fill fs-1"></i>
-      </div>
-      <h1 class="h4 fw-bold mb-0">Welcome Back</h1>
-      <p class="small opacity-75 mb-0">Sign in to your IPCMS account</p>
-    </div>
-
-    <!-- Card Body -->
-    <div class="card-body px-4 py-4">
-      <form method="POST" action="{{ url_for('auth.login') }}" novalidate id="loginForm">
-        {{ form.hidden_tag() }}
-
-        <!-- Email -->
-        <div class="mb-3">
-          {{ form.email.label(class='form-label fw-semibold') }}
-          <div class="input-group">
-            <span class="input-group-text bg-light border-end-0">
-              <i class="bi bi-envelope text-muted"></i>
-            </span>
-            {{ form.email(class='form-control border-start-0 ps-0' + (' is-invalid' if form.email.errors else '')) }}
-            {% if form.email.errors %}
-              <div class="invalid-feedback">{{ form.email.errors[0] }}</div>
-            {% endif %}
+  <!-- Role Grid -->
+  <div class="row g-4 justify-content-center">
+    
+    <!-- Admin Card -->
+    <div class="col-sm-12 col-md-6 col-xl-3">
+      <div class="card h-100 shadow border-0 border-top border-4 border-primary ipcms-stat-card">
+        <div class="card-header bg-transparent border-bottom-0 text-center pt-4 pb-0">
+          <div class="ipcms-stat-icon bg-primary-subtle text-primary mx-auto mb-2" style="width: 54px; height: 54px; border-radius: 50%;">
+            <i class="bi bi-shield-lock-fill fs-3"></i>
           </div>
+          <h4 class="fw-bold text-dark mb-0">Admin Login</h4>
+          <p class="text-muted small">System Administrator</p>
         </div>
-
-        <!-- Password -->
-        <div class="mb-3">
-          {{ form.password.label(class='form-label fw-semibold') }}
-          <div class="input-group">
-            <span class="input-group-text bg-light border-end-0">
-              <i class="bi bi-lock text-muted"></i>
-            </span>
-            {{ form.password(class='form-control border-start-0 ps-0 border-end-0' + (' is-invalid' if form.password.errors else ''), id='passwordField') }}
-            <button class="btn btn-outline-secondary border-start-0" type="button" id="togglePassword"
-                    title="Show/hide password" aria-label="Toggle password visibility">
-              <i class="bi bi-eye" id="toggleIcon"></i>
+        
+        <div class="card-body px-4 py-3">
+          <form method="POST" action="{{ url_for('auth.login') }}" novalidate>
+            {{ form.csrf_token }}
+            
+            <div class="mb-3">
+              <label class="form-label small fw-semibold text-muted" for="admin_email">Email</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light border-end-0"><i class="bi bi-envelope text-muted"></i></span>
+                <input class="form-control border-start-0 ps-0" id="admin_email" name="email" placeholder="Enter admin email" required type="email" value="admin@ipcms.com">
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label small fw-semibold text-muted" for="admin_password">Password</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light border-end-0"><i class="bi bi-lock text-muted"></i></span>
+                <input class="form-control border-start-0 ps-0 border-end-0" id="admin_password" name="password" placeholder="Enter password" required type="password" value="admin123">
+                <button class="btn btn-outline-secondary border-start-0" type="button" id="toggleAdminPassword" title="Show/hide password">
+                  <i class="bi bi-eye" id="adminToggleIcon"></i>
+                </button>
+              </div>
+            </div>
+            
+            <div class="d-flex justify-content-between align-items-center mb-4 small">
+              <div class="form-check">
+                <input class="form-check-input" id="admin_remember_me" name="remember_me" type="checkbox">
+                <label class="form-check-label text-muted" for="admin_remember_me">Remember Me</label>
+              </div>
+              <a href="#" class="text-decoration-none text-primary">Forgot Password?</a>
+            </div>
+            
+            <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold mb-3">
+              <i class="bi bi-box-arrow-in-right me-1"></i>Login as Admin
             </button>
-            {% if form.password.errors %}
-              <div class="invalid-feedback">{{ form.password.errors[0] }}</div>
-            {% endif %}
+          </form>
+        </div>
+        
+        <div class="card-footer bg-light border-top-0 px-4 py-3 small">
+          <div class="mb-3 bg-white p-2 rounded border border-light">
+            <span class="fw-bold text-primary d-block mb-1"><i class="bi bi-info-circle me-1"></i>Default Admin Credentials</span>
+            <span class="d-block text-muted">Email: <code>admin@ipcms.com</code></span>
+            <span class="d-block text-muted">Password: <code>admin123</code></span>
+          </div>
+          <p class="text-muted mb-3 text-center">Don't have an account? <span class="text-primary fw-semibold">Contact System Administrator</span></p>
+          <hr class="my-2 text-muted">
+          <div class="pt-1">
+            <span class="fw-bold text-primary d-block mb-1">Admin Access</span>
+            <span class="text-muted xsmall">Manage system settings, users, doctors, nurses and patient records.</span>
           </div>
         </div>
-
-        <!-- Remember Me -->
-        <div class="mb-4 d-flex align-items-center">
-          <div class="form-check">
-            {{ form.remember_me(class='form-check-input', id='rememberMe') }}
-            {{ form.remember_me.label(class='form-check-label text-muted small', for='rememberMe') }}
-          </div>
-        </div>
-
-        <!-- Submit -->
-        {{ form.submit(class='btn ipcms-btn-primary w-100 py-2 fw-semibold', id='submitBtn') }}
-      </form>
-
-      <hr class="my-3 text-muted"/>
-
-      <div class="text-center">
-        <p class="text-muted small mb-0">
-          Don't have an account?
-          <a href="{{ url_for('auth.register') }}" class="text-decoration-none fw-semibold">
-            Create one
-          </a>
-        </p>
       </div>
     </div>
 
-    <!-- Default credentials hint for development -->
-    <div class="card-footer bg-light border-0 px-4 py-3">
-      <p class="text-muted small mb-1 fw-semibold">
-        <i class="bi bi-info-circle me-1"></i>Default Test Credentials
-      </p>
-      <div class="row g-1 small text-muted">
-        <div class="col-6">
-          <code>admin@ipcms.com</code> / <code>admin123</code>
+    <!-- Doctor Card -->
+    <div class="col-sm-12 col-md-6 col-xl-3">
+      <div class="card h-100 shadow border-0 border-top border-4 border-success ipcms-stat-card">
+        <div class="card-header bg-transparent border-bottom-0 text-center pt-4 pb-0">
+          <div class="ipcms-stat-icon bg-success-subtle text-success mx-auto mb-2" style="width: 54px; height: 54px; border-radius: 50%;">
+            <i class="bi bi-person-workspace fs-3"></i>
+          </div>
+          <h4 class="fw-bold text-dark mb-0">Doctor Login</h4>
+          <p class="text-muted small">Medical Practitioner</p>
         </div>
-        <div class="col-6">
-          <code>doctor@ipcms.com</code> / <code>doctor123</code>
+        
+        <div class="card-body px-4 py-3">
+          <form method="POST" action="{{ url_for('auth.login') }}" novalidate>
+            {{ form.csrf_token }}
+            
+            <div class="mb-3">
+              <label class="form-label small fw-semibold text-muted" for="doctor_email">Email</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light border-end-0"><i class="bi bi-envelope text-muted"></i></span>
+                <input class="form-control border-start-0 ps-0" id="doctor_email" name="email" placeholder="Enter doctor email" required type="email" value="doctor@ipcms.com">
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label small fw-semibold text-muted" for="doctor_password">Password</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light border-end-0"><i class="bi bi-lock text-muted"></i></span>
+                <input class="form-control border-start-0 ps-0 border-end-0" id="doctor_password" name="password" placeholder="Enter password" required type="password" value="doctor123">
+                <button class="btn btn-outline-secondary border-start-0" type="button" id="toggleDoctorPassword" title="Show/hide password">
+                  <i class="bi bi-eye" id="doctorToggleIcon"></i>
+                </button>
+              </div>
+            </div>
+            
+            <div class="d-flex justify-content-between align-items-center mb-4 small">
+              <div class="form-check">
+                <input class="form-check-input" id="doctor_remember_me" name="remember_me" type="checkbox">
+                <label class="form-check-label text-muted" for="doctor_remember_me">Remember Me</label>
+              </div>
+              <a href="#" class="text-decoration-none text-success">Forgot Password?</a>
+            </div>
+            
+            <button type="submit" class="btn btn-success w-100 py-2 fw-semibold mb-3">
+              <i class="bi bi-box-arrow-in-right me-1"></i>Login as Doctor
+            </button>
+          </form>
         </div>
-        <div class="col-6">
-          <code>nurse@ipcms.com</code> / <code>nurse123</code>
+        
+        <div class="card-footer bg-light border-top-0 px-4 py-3 small">
+          <div class="mb-3 bg-white p-2 rounded border border-light">
+            <span class="fw-bold text-success d-block mb-1"><i class="bi bi-info-circle me-1"></i>Default Doctor Credentials</span>
+            <span class="d-block text-muted">Email: <code>doctor@ipcms.com</code></span>
+            <span class="d-block text-muted">Password: <code>doctor123</code></span>
+          </div>
+          <p class="text-muted mb-3 text-center">Don't have an account? <span class="text-success fw-semibold">Contact Administrator</span></p>
+          <hr class="my-2 text-muted">
+          <div class="pt-1">
+            <span class="fw-bold text-success d-block mb-1">Doctor Access</span>
+            <span class="text-muted xsmall">View appointments, patient records, diagnosis, prescriptions and reports.</span>
+          </div>
         </div>
-        <div class="col-6">
-          <code>patient@ipcms.com</code> / <code>patient123</code>
+      </div>
+    </div>
+
+    <!-- Nurse Card -->
+    <div class="col-sm-12 col-md-6 col-xl-3">
+      <div class="card h-100 shadow border-0 border-top border-4 ipcms-stat-card" style="border-top-color: #6f42c1 !important;">
+        <div class="card-header bg-transparent border-bottom-0 text-center pt-4 pb-0">
+          <div class="ipcms-stat-icon text-white mx-auto mb-2" style="width: 54px; height: 54px; border-radius: 50%; background-color: #6f42c1;">
+            <i class="bi bi-heart-pulse-fill fs-3"></i>
+          </div>
+          <h4 class="fw-bold text-dark mb-0">Nurse Login</h4>
+          <p class="text-muted small">Nursing Staff</p>
+        </div>
+        
+        <div class="card-body px-4 py-3">
+          <form method="POST" action="{{ url_for('auth.login') }}" novalidate>
+            {{ form.csrf_token }}
+            
+            <div class="mb-3">
+              <label class="form-label small fw-semibold text-muted" for="nurse_email">Email</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light border-end-0"><i class="bi bi-envelope text-muted"></i></span>
+                <input class="form-control border-start-0 ps-0" id="nurse_email" name="email" placeholder="Enter nurse email" required type="email" value="nurse@ipcms.com">
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label small fw-semibold text-muted" for="nurse_password">Password</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light border-end-0"><i class="bi bi-lock text-muted"></i></span>
+                <input class="form-control border-start-0 ps-0 border-end-0" id="nurse_password" name="password" placeholder="Enter password" required type="password" value="nurse123">
+                <button class="btn btn-outline-secondary border-start-0" type="button" id="toggleNursePassword" title="Show/hide password">
+                  <i class="bi bi-eye" id="nurseToggleIcon"></i>
+                </button>
+              </div>
+            </div>
+            
+            <div class="d-flex justify-content-between align-items-center mb-4 small">
+              <div class="form-check">
+                <input class="form-check-input" id="nurse_remember_me" name="remember_me" type="checkbox">
+                <label class="form-check-label text-muted" for="nurse_remember_me">Remember Me</label>
+              </div>
+              <a href="#" class="text-decoration-none" style="color: #6f42c1;">Forgot Password?</a>
+            </div>
+            
+            <button type="submit" class="btn text-white w-100 py-2 fw-semibold mb-3" style="background-color: #6f42c1;">
+              <i class="bi bi-box-arrow-in-right me-1"></i>Login as Nurse
+            </button>
+          </form>
+        </div>
+        
+        <div class="card-footer bg-light border-top-0 px-4 py-3 small">
+          <div class="mb-3 bg-white p-2 rounded border border-light">
+            <span class="fw-bold d-block mb-1" style="color: #6f42c1;"><i class="bi bi-info-circle me-1"></i>Default Nurse Credentials</span>
+            <span class="d-block text-muted">Email: <code>nurse@ipcms.com</code></span>
+            <span class="d-block text-muted">Password: <code>nurse123</code></span>
+          </div>
+          <p class="text-muted mb-3 text-center">Don't have an account? <span class="fw-semibold" style="color: #6f42c1;">Contact Administrator</span></p>
+          <hr class="my-2 text-muted">
+          <div class="pt-1">
+            <span class="fw-bold d-block mb-1" style="color: #6f42c1;">Nurse Access</span>
+            <span class="text-muted xsmall">View patient information, update vitals, manage medications and assist doctors.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Patient Card -->
+    <div class="col-sm-12 col-md-6 col-xl-3">
+      <div class="card h-100 shadow border-0 border-top border-4 ipcms-stat-card" style="border-top-color: #fd7e14 !important;">
+        <div class="card-header bg-transparent border-bottom-0 text-center pt-4 pb-0">
+          <div class="ipcms-stat-icon text-white mx-auto mb-2" style="width: 54px; height: 54px; border-radius: 50%; background-color: #fd7e14;">
+            <i class="bi bi-person-fill fs-3"></i>
+          </div>
+          <h4 class="fw-bold text-dark mb-0">Patient Login</h4>
+          <p class="text-muted small">Registered Patient</p>
+        </div>
+        
+        <div class="card-body px-4 py-3">
+          <form method="POST" action="{{ url_for('auth.login') }}" novalidate>
+            {{ form.csrf_token }}
+            
+            <div class="mb-3">
+              <label class="form-label small fw-semibold text-muted" for="patient_email">Email</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light border-end-0"><i class="bi bi-envelope text-muted"></i></span>
+                <input class="form-control border-start-0 ps-0" id="patient_email" name="email" placeholder="Enter patient email" required type="email" value="patient@ipcms.com">
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label small fw-semibold text-muted" for="patient_password">Password</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light border-end-0"><i class="bi bi-lock text-muted"></i></span>
+                <input class="form-control border-start-0 ps-0 border-end-0" id="patient_password" name="password" placeholder="Enter password" required type="password" value="patient123">
+                <button class="btn btn-outline-secondary border-start-0" type="button" id="togglePatientPassword" title="Show/hide password">
+                  <i class="bi bi-eye" id="patientToggleIcon"></i>
+                </button>
+              </div>
+            </div>
+            
+            <div class="d-flex justify-content-between align-items-center mb-4 small">
+              <div class="form-check">
+                <input class="form-check-input" id="patient_remember_me" name="remember_me" type="checkbox">
+                <label class="form-check-label text-muted" for="patient_remember_me">Remember Me</label>
+              </div>
+              <a href="#" class="text-decoration-none" style="color: #fd7e14;">Forgot Password?</a>
+            </div>
+            
+            <button type="submit" class="btn text-white w-100 py-2 fw-semibold mb-3" style="background-color: #fd7e14;">
+              <i class="bi bi-box-arrow-in-right me-1"></i>Login as Patient
+            </button>
+          </form>
+        </div>
+        
+        <div class="card-footer bg-light border-top-0 px-4 py-3 small">
+          <div class="mb-3 bg-white p-2 rounded border border-light">
+            <span class="fw-bold d-block mb-1" style="color: #fd7e14;"><i class="bi bi-info-circle me-1"></i>Default Patient Credentials</span>
+            <span class="d-block text-muted">Email: <code>patient@ipcms.com</code></span>
+            <span class="d-block text-muted">Password: <code>patient123</code></span>
+          </div>
+          <p class="text-muted mb-3 text-center">Don't have an account? <a href="{{ url_for('auth.register') }}" class="fw-semibold text-decoration-none" style="color: #fd7e14;">Register Here</a></p>
+          <hr class="my-2 text-muted">
+          <div class="pt-1">
+            <span class="fw-bold d-block mb-1" style="color: #fd7e14;">Patient Access</span>
+            <span class="text-muted xsmall">Book appointments, view reports, prescriptions and medical history.</span>
+          </div>
         </div>
       </div>
     </div>
@@ -101,17 +274,25 @@
 
 {% block scripts %}
 <script>
-  // Toggle password visibility
-  const toggleBtn  = document.getElementById('togglePassword');
-  const toggleIcon = document.getElementById('toggleIcon');
-  const pwdField   = document.getElementById('passwordField');
-
-  if (toggleBtn) {
-    toggleBtn.addEventListener('click', () => {
-      const isText = pwdField.type === 'text';
-      pwdField.type = isText ? 'password' : 'text';
-      toggleIcon.className = isText ? 'bi bi-eye' : 'bi bi-eye-slash';
-    });
+  // Helper to register password visibility toggle for each role card
+  function togglePwdVisibility(buttonId, fieldId, iconId) {
+    const btn = document.getElementById(buttonId);
+    const pwd = document.getElementById(fieldId);
+    const icon = document.getElementById(iconId);
+    if (btn && pwd && icon) {
+      btn.addEventListener('click', () => {
+        const isText = pwd.type === 'text';
+        pwd.type = isText ? 'password' : 'text';
+        icon.className = isText ? 'bi bi-eye' : 'bi bi-eye-slash';
+      });
+    }
   }
+  
+  document.addEventListener('DOMContentLoaded', () => {
+    togglePwdVisibility('toggleAdminPassword', 'admin_password', 'adminToggleIcon');
+    togglePwdVisibility('toggleDoctorPassword', 'doctor_password', 'doctorToggleIcon');
+    togglePwdVisibility('toggleNursePassword', 'nurse_password', 'nurseToggleIcon');
+    togglePwdVisibility('togglePatientPassword', 'patient_password', 'patientToggleIcon');
+  });
 </script>
 {% endblock %}

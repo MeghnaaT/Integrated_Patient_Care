@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+
+  <!-- Header -->
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h2 class="fw-bold mb-0"><i class="bi bi-file-earmark-bar-graph me-2 text-primary"></i>Reports</h2>
+      <p class="text-muted small mb-0">Generate monthly and weekly operational statistics for the system</p>
+    </div>
+    <span class="badge bg-primary-subtle text-primary px-3 py-2 rounded-pill fs-6">
+      <i class="bi bi-graph-up me-1"></i>Analytics
+    </span>
+  </div>
+
+  <!-- Report Configuration Card -->
+  <div class="card border-0 shadow-sm ipcms-stat-card mb-4">
+    <div class="card-body p-4">
+      <h5 class="fw-bold text-dark mb-4"><i class="bi bi-sliders me-2 text-primary"></i>Select Report Parameters</h5>
+      
+      <form method="GET" action="{{ url_for('reports.view_reports') }}" class="row g-3 align-items-end">
+        <!-- Report Type -->
+        <div class="col-md-5">
+          <label class="form-label fw-semibold text-muted" for="report_type">Select Report</label>
+          <select name="report_type" id="report_type" class="form-select border-primary-subtle" required>
+            <option value="" disabled {% if not report_type %}selected{% endif %}>-- Choose Report Type --</option>
+            <option value="Monthly Appointment Report" {% if report_type == 'Monthly Appointment Report' %}selected{% endif %}>Monthly Appointment Report</option>
+            <option value="Patient Registration Report" {% if report_type == 'Patient Registration Report' %}selected{% endif %}>Patient Registration Report</option>
+          </select>
+        </div>
+
+        <!-- Month -->
+        <div class="col-md-3">
+          <label class="form-label fw-semibold text-muted" for="month">Month</label>
+          <select name="month" id="month" class="form-select">
+            {% for m, name in months_list %}
+              <option value="{{ m }}" {% if selected_month == m %}selected{% endif %}>{{ name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Year -->
+        <div class="col-md-2">
+          <label class="form-label fw-semibold text-muted" for="year">Year</label>
+          <select name="year" id="year" class="form-select">
+            {% for y in years_list %}
+              <option value="{{ y }}" {% if selected_year == y %}selected{% endif %}>{{ y }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="col-md-2">
+          <button type="submit" class="btn ipcms-btn-primary w-100 py-2 fw-semibold">
+            <i class="bi bi-play-circle me-1"></i>Generate
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Report Data Results Grid -->
+  {% if show_results %}
+  <div class="card border-0 shadow-sm ipcms-stat-card">
+    <div class="card-header bg-transparent border-bottom pt-4 px-4 pb-2">
+      <div class="d-flex align-items-center gap-3">
+        <div class="ipcms-stat-icon bg-primary-subtle text-primary">
+          <i class="bi bi-table fs-4"></i>
+        </div>
+        <div>
+          <h4 class="fw-bold mb-0 text-dark">
+            {{ report_type }} &mdash; {{ month_name }} {{ selected_year }}
+          </h4>
+          <p class="text-muted small mb-0">Generated weekly breakdown for the chosen billing period</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card-body px-4 py-3">
+      {% if report_data %}
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th scope="col" class="ps-4 py-3 text-uppercase small text-muted tracking-wide" style="width: 70%;">Date Range</th>
+                <th scope="col" class="pe-4 py-3 text-uppercase small text-muted tracking-wide text-end">
+                  {% if report_type == 'Monthly Appointment Report' %}
+                    Total Appointments
+                  {% else %}
+                    Total Registrations
+                  {% endif %}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in report_data %}
+              <tr>
+                <td class="ps-4 py-3 fw-semibold text-dark">
+                  <i class="bi bi-calendar3 me-2 text-primary"></i>{{ row.range }}
+                </td>
+                <td class="pe-4 py-3 text-end fw-bold text-primary fs-5">
+                  {{ row.count }}
+                </td>
+              </tr>
+              {% endfor %}
+              <!-- Grand Total Row -->
+              <tr class="table-dark">
+                <td class="ps-4 py-3 fw-bold">Total</td>
+                <td class="pe-4 py-3 text-end fw-bold fs-4 text-warning">
+                  {{ total_count }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="text-center py-5 text-muted">
+          <i class="bi bi-clipboard-x fs-1 d-block mb-3 text-secondary"></i>
+          <p class="mb-0">No records found for the selected period.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+  {% else %}
+  <!-- Empty State Hint -->
+  <div class="text-center py-5 text-muted bg-white rounded-3 shadow-sm border border-light">
+    <i class="bi bi-file-earmark-bar-graph fs-1 text-secondary mb-3"></i>
+    <h5 class="fw-bold">No Report Active</h5>
+    <p class="small mb-0">Select report type and date configurations above to query database operational summaries.</p>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

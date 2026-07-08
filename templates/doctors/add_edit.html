@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid px-4 py-5 d-flex justify-content-center align-items-center" style="min-height: calc(100vh - 120px);">
+  <div class="card border-0 shadow-lg ipcms-stat-card w-100" style="max-width: 900px;">
+    
+    <!-- Card Header -->
+    <div class="card-header bg-transparent border-bottom-0 pt-4 pb-0 px-4">
+      <div class="d-flex align-items-center gap-3">
+        <div class="ipcms-stat-icon bg-success-subtle text-success">
+          <i class="bi {% if action == 'add' %}bi-person-plus-fill{% else %}bi-pencil-square{% endif %} fs-3"></i>
+        </div>
+        <div>
+          <h3 class="fw-bold mb-0 text-dark">{{ title }}</h3>
+          <p class="text-muted small mb-0">
+            {% if action == 'add' %}
+              Register a new doctor and configure their credential details.
+            {% else %}
+              Update clinical profile details for Dr. {{ doctor.full_name }}.
+            {% endif %}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card Body -->
+    <div class="card-body p-4">
+      <form method="POST" action="{% if action == 'add' %}{{ url_for('doctor.add_doctor_view') }}{% else %}{{ url_for('doctor.edit_doctor_view', doctor_id=doctor.id) }}{% endif %}" novalidate>
+        {{ form.hidden_tag() }}
+
+        <div class="row g-4">
+          <!-- Left Column: Demographics & Specialization -->
+          <div class="col-md-6 border-end-md">
+            <h5 class="fw-bold text-success mb-3"><i class="bi bi-person-workspace me-2"></i>Staff Identity</h5>
+            
+            <!-- First Name -->
+            <div class="mb-3">
+              {{ form.first_name.label(class='form-label fw-semibold') }}
+              {{ form.first_name(class='form-control' + (' is-invalid' if form.first_name.errors else '')) }}
+              {% if form.first_name.errors %}
+                <div class="invalid-feedback">{{ form.first_name.errors[0] }}</div>
+              {% endif %}
+            </div>
+
+            <!-- Last Name -->
+            <div class="mb-3">
+              {{ form.last_name.label(class='form-label fw-semibold') }}
+              {{ form.last_name(class='form-control' + (' is-invalid' if form.last_name.errors else '')) }}
+              {% if form.last_name.errors %}
+                <div class="invalid-feedback">{{ form.last_name.errors[0] }}</div>
+              {% endif %}
+            </div>
+
+            <!-- Qualification -->
+            <div class="mb-3">
+              {{ form.qualification.label(class='form-label fw-semibold') }}
+              {{ form.qualification(class='form-control' + (' is-invalid' if form.qualification.errors else '')) }}
+              {% if form.qualification.errors %}
+                <div class="invalid-feedback">{{ form.qualification.errors[0] }}</div>
+              {% endif %}
+              <div class="form-text small">e.g., MD, FACC, MBBS</div>
+            </div>
+
+            <!-- Department -->
+            <div class="mb-3">
+              {{ form.department_id.label(class='form-label fw-semibold') }}
+              {{ form.department_id(class='form-select' + (' is-invalid' if form.department_id.errors else '')) }}
+              {% if form.department_id.errors %}
+                <div class="invalid-feedback">{{ form.department_id.errors[0] }}</div>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Right Column: Availability & Contact Details -->
+          <div class="col-md-6">
+            <h5 class="fw-bold text-primary mb-3"><i class="bi bi-clock me-2"></i>Scheduling &amp; Contact</h5>
+            
+            <!-- Specialization -->
+            <div class="mb-3">
+              {{ form.specialization.label(class='form-label fw-semibold') }}
+              {{ form.specialization(class='form-control' + (' is-invalid' if form.specialization.errors else '')) }}
+              {% if form.specialization.errors %}
+                <div class="invalid-feedback">{{ form.specialization.errors[0] }}</div>
+              {% endif %}
+              <div class="form-text small">e.g., Cardiologist, Neurologist</div>
+            </div>
+
+            <!-- Available Time -->
+            <div class="mb-3">
+              {{ form.available_time.label(class='form-label fw-semibold') }}
+              {{ form.available_time(class='form-control' + (' is-invalid' if form.available_time.errors else '')) }}
+              {% if form.available_time.errors %}
+                <div class="invalid-feedback">{{ form.available_time.errors[0] }}</div>
+              {% endif %}
+            </div>
+
+            <!-- Email Address -->
+            <div class="mb-3">
+              {{ form.email_address.label(class='form-label fw-semibold') }}
+              {{ form.email_address(class='form-control' + (' is-invalid' if form.email_address.errors else '')) }}
+              {% if form.email_address.errors %}
+                <div class="invalid-feedback">{{ form.email_address.errors[0] }}</div>
+              {% endif %}
+              {% if action == 'add' %}
+                <div class="form-text small text-muted">A synced Doctor login account will automatically be created.</div>
+              {% endif %}
+            </div>
+
+            <!-- Contact Number -->
+            <div class="mb-3">
+              {{ form.contact_number.label(class='form-label fw-semibold') }}
+              {{ form.contact_number(class='form-control' + (' is-invalid' if form.contact_number.errors else '')) }}
+              {% if form.contact_number.errors %}
+                <div class="invalid-feedback">{{ form.contact_number.errors[0] }}</div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Form Submission Footer Buttons -->
+        <div class="border-top mt-4 pt-3 d-flex justify-content-end gap-2">
+          {% if action == 'add' %}
+            <a href="{{ url_for('doctor.list_doctors_view') }}" class="btn btn-outline-secondary px-4">Cancel</a>
+          {% else %}
+            {% if current_user.role.name == 'Doctor' %}
+              <a href="{{ url_for('doctor.dashboard') }}" class="btn btn-outline-secondary px-4">Cancel</a>
+            {% else %}
+              <a href="{{ url_for('doctor.view_doctor_view', doctor_id=doctor.id) }}" class="btn btn-outline-secondary px-4">Cancel</a>
+            {% endif %}
+          {% endif %}
+          {{ form.submit(class='btn ipcms-btn-primary px-4 fw-semibold') }}
+        </div>
+      </form>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

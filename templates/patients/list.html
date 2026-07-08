@@ -1,0 +1,179 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+
+  <!-- Header Section -->
+  <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+    <div>
+      <h2 class="fw-bold mb-0"><i class="bi bi-people me-2 text-primary"></i>Patient Directory</h2>
+      <p class="text-muted small mb-0">Browse, search, and manage system patient records</p>
+    </div>
+    {% if current_user.role.name in ['Admin', 'Nurse'] %}
+    <a href="{{ url_for('patient.add_patient_view') }}" class="btn ipcms-btn-primary px-3 py-2 fw-semibold" id="btnAddPatient">
+      <i class="bi bi-person-plus me-1"></i>Add Patient
+    </a>
+    {% endif %}
+  </div>
+
+  <!-- Search & Filter Controls -->
+  <div class="card border-0 shadow-sm mb-4 bg-light">
+    <div class="card-body py-3">
+      <form method="GET" action="{{ url_for('patient.list_patients_view') }}" class="row g-3 align-items-center">
+        <!-- Search input -->
+        <div class="col-lg-5 col-md-6">
+          <div class="input-group">
+            <span class="input-group-text bg-white border-end-0">
+              <i class="bi bi-search text-muted"></i>
+            </span>
+            <input type="text" name="q" value="{{ q }}" class="form-control border-start-0" placeholder="Search by name, email, or phone number..." aria-label="Search patients">
+          </div>
+        </div>
+
+        <!-- Sorting Column -->
+        <div class="col-lg-3 col-md-3">
+          <div class="input-group">
+            <span class="input-group-text bg-white small text-muted">Sort By</span>
+            <select name="sort" class="form-select">
+              <option value="last_name" {% if sort == 'last_name' %}selected{% endif %}>Last Name</option>
+              <option value="first_name" {% if sort == 'first_name' %}selected{% endif %}>First Name</option>
+              <option value="age" {% if sort == 'age' %}selected{% endif %}>Age</option>
+              <option value="registered_on" {% if sort == 'registered_on' %}selected{% endif %}>Registration Date</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Sorting Direction -->
+        <div class="col-lg-2 col-md-3">
+          <select name="direction" class="form-select">
+            <option value="asc" {% if direction == 'asc' %}selected{% endif %}>Ascending</option>
+            <option value="desc" {% if direction == 'desc' %}selected{% endif %}>Descending</option>
+          </select>
+        </div>
+
+        <!-- Buttons -->
+        <div class="col-lg-2 col-md-12 d-flex gap-2">
+          <button type="submit" class="btn btn-primary w-100 fw-semibold">Filter</button>
+          {% if q or sort != 'last_name' or direction != 'asc' %}
+          <a href="{{ url_for('patient.list_patients_view') }}" class="btn btn-outline-secondary" title="Reset Filters"><i class="bi bi-arrow-counterclockwise"></i></a>
+          {% endif %}
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Patient List Card -->
+  <div class="card border-0 shadow-sm ipcms-stat-card">
+    <div class="card-body p-0">
+      {% if patients %}
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th scope="col" class="ps-4">ID</th>
+              <th scope="col">Name</th>
+              <th scope="col">Age</th>
+              <th scope="col">Gender</th>
+              <th scope="col">Blood Group</th>
+              <th scope="col">Phone</th>
+              <th scope="col">Email</th>
+              <th scope="col">Registered</th>
+              <th scope="col" class="text-end pe-4">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in patients %}
+            <tr id="patient-row-{{ p.id }}">
+              <td class="ps-4 text-muted small fw-semibold">#{{ p.id }}</td>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <div class="ipcms-avatar-sm flex-shrink-0" style="width: 32px; height: 32px; font-size: 0.8rem;">
+                    {{ p.first_name[0] }}{{ p.last_name[0] }}
+                  </div>
+                  <div>
+                    <a href="{{ url_for('patient.view_patient_view', patient_id=p.id) }}" class="fw-bold text-decoration-none text-dark hover-primary">{{ p.full_name }}</a>
+                  </div>
+                </div>
+              </td>
+              <td>{{ p.age }}</td>
+              <td>{{ p.gender }}</td>
+              <td>
+                <span class="badge bg-danger-subtle text-danger px-2 py-1">{{ p.blood_group }}</span>
+              </td>
+              <td>{{ p.phone_number }}</td>
+              <td class="text-muted">{{ p.email }}</td>
+              <td class="small">{{ p.registered_on.strftime('%d %b %Y') }}</td>
+              <td class="text-end pe-4">
+                <div class="d-flex justify-content-end gap-1">
+                  <a href="{{ url_for('patient.view_patient_view', patient_id=p.id) }}" class="btn btn-outline-info btn-sm" title="View Patient Details">
+                    <i class="bi bi-eye"></i>
+                  </a>
+                  {% if current_user.role.name in ['Admin', 'Nurse'] %}
+                  <a href="{{ url_for('patient.edit_patient_view', patient_id=p.id) }}" class="btn btn-outline-primary btn-sm" title="Edit Patient">
+                    <i class="bi bi-pencil"></i>
+                  </a>
+                  <form action="{{ url_for('patient.delete_patient_view', patient_id=p.id) }}" method="POST" class="d-inline delete-patient-form" onsubmit="return confirm('Are you sure you want to delete patient {{ p.full_name }}? This will soft-delete their user account.');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete Patient">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </form>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="text-center py-5 text-muted">
+        <i class="bi bi-people fs-1 d-block mb-3 text-secondary"></i>
+        <h5 class="fw-bold">No Patients Found</h5>
+        <p class="small mb-0">Try adjusting your search criteria or register a new patient.</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Pagination Footer -->
+    {% if total_pages > 1 %}
+    <div class="card-footer bg-transparent border-top-0 d-flex align-items-center justify-content-between px-4 py-3">
+      <div class="small text-muted">
+        Showing <strong>{{ patients|length }}</strong> of <strong>{{ total }}</strong> patient records
+      </div>
+      <nav aria-label="Patient search results pages">
+        <ul class="pagination pagination-sm mb-0">
+          <!-- Previous Page -->
+          <li class="page-item {% if page == 1 %}disabled{% endif %}">
+            <a class="page-link" href="{{ url_for('patient.list_patients_view', page=page-1, q=q, sort=sort, direction=direction) }}" aria-label="Previous">
+              <span aria-hidden="true">&laquo;</span>
+            </a>
+          </li>
+          
+          <!-- Page Numbers -->
+          {% for p in range(1, total_pages + 1) %}
+          <li class="page-item {% if p == page %}active{% endif %}">
+            <a class="page-link" href="{{ url_for('patient.list_patients_view', page=p, q=q, sort=sort, direction=direction) }}">{{ p }}</a>
+          </li>
+          {% endfor %}
+
+          <!-- Next Page -->
+          <li class="page-item {% if page == total_pages %}disabled{% endif %}">
+            <a class="page-link" href="{{ url_for('patient.list_patients_view', page=page+1, q=q, sort=sort, direction=direction) }}" aria-label="Next">
+              <span aria-hidden="true">&raquo;</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+    {% elif patients %}
+    <div class="card-footer bg-transparent border-top-0 px-4 py-3">
+      <div class="small text-muted text-center">
+        Showing all <strong>{{ total }}</strong> patient records
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

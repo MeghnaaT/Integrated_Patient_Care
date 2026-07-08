@@ -3,6 +3,7 @@
 {% block content %}
 <div class="container-fluid px-4 py-4">
 
+  <!-- Header -->
   <div class="d-flex align-items-center justify-content-between mb-4">
     <div>
       <h2 class="fw-bold mb-0"><i class="bi bi-person-heart me-2 text-info"></i>My Dashboard</h2>
@@ -15,14 +16,14 @@
     </span>
   </div>
 
-  <!-- Patient Info Card -->
+  <!-- Patient Info Demographics Banner -->
   {% if patient %}
   <div class="card border-0 shadow-sm mb-4">
     <div class="card-body px-4 py-3">
       <div class="row align-items-center g-3">
         <div class="col-auto">
           <div class="ipcms-avatar-lg bg-info-subtle text-info fw-bold fs-3">
-            {{ patient.first_name[0] }}
+            {{ patient.first_name[0] }}{{ patient.last_name[0] }}
           </div>
         </div>
         <div class="col">
@@ -30,12 +31,12 @@
           <div class="d-flex flex-wrap gap-3 small text-muted">
             <span><i class="bi bi-person-fill me-1"></i>{{ patient.gender }}</span>
             <span><i class="bi bi-calendar3 me-1"></i>Age {{ patient.age }}</span>
-            <span><i class="bi bi-droplet-fill me-1 text-danger"></i>{{ patient.blood_group }}</span>
+            <span><i class="bi bi-droplet-fill me-1 text-danger"></i>Blood Group: {{ patient.blood_group }}</span>
             <span><i class="bi bi-telephone me-1"></i>{{ patient.phone_number }}</span>
           </div>
         </div>
         <div class="col-auto">
-          <a href="#" class="btn btn-outline-info btn-sm">
+          <a href="{{ url_for('patient.edit_patient_view', patient_id=current_user.id) }}" class="btn btn-outline-info btn-sm fw-semibold">
             <i class="bi bi-pencil me-1"></i>Edit Profile
           </a>
         </div>
@@ -44,15 +45,92 @@
   </div>
   {% endif %}
 
-  <div class="row g-4">
-    <!-- My Appointments -->
-    <div class="col-lg-7">
-      <div class="card border-0 shadow-sm h-100">
-        <div class="card-header bg-transparent border-bottom-0 pt-3 pb-0 px-4 d-flex justify-content-between align-items-center">
-          <h6 class="fw-bold mb-0"><i class="bi bi-calendar-check me-2 text-info"></i>My Appointments</h6>
-          <a href="#" class="btn btn-sm ipcms-btn-primary">
-            <i class="bi bi-plus me-1"></i>Book
-          </a>
+  <!-- Stats Cards -->
+  <div class="row g-4 mb-4">
+    <!-- Today's Appointments -->
+    <div class="col-md-4">
+      <div class="card ipcms-stat-card border-0 shadow-sm">
+        <div class="card-body d-flex align-items-center gap-3">
+          <div class="ipcms-stat-icon bg-danger-subtle text-danger">
+            <i class="bi bi-calendar-check fs-3"></i>
+          </div>
+          <div>
+            <p class="text-muted small mb-0 fw-semibold text-uppercase tracking-wide">Today's Appointments</p>
+            <h3 class="fw-bold mb-0 text-dark">{{ today_appts }}</h3>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Total Appointments -->
+    <div class="col-md-4">
+      <div class="card ipcms-stat-card border-0 shadow-sm">
+        <div class="card-body d-flex align-items-center gap-3">
+          <div class="ipcms-stat-icon bg-info-subtle text-info">
+            <i class="bi bi-calendar-range-fill fs-3"></i>
+          </div>
+          <div>
+            <p class="text-muted small mb-0 fw-semibold text-uppercase tracking-wide">Total Booked Sessions</p>
+            <h3 class="fw-bold mb-0 text-dark">{{ total_appts }}</h3>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Medical Records Count -->
+    <div class="col-md-4">
+      <div class="card ipcms-stat-card border-0 shadow-sm">
+        <div class="card-body d-flex align-items-center gap-3">
+          <div class="ipcms-stat-icon bg-success-subtle text-success">
+            <i class="bi bi-file-earmark-medical-fill fs-3"></i>
+          </div>
+          <div>
+            <p class="text-muted small mb-0 fw-semibold text-uppercase tracking-wide">Medical Records</p>
+            <h3 class="fw-bold mb-0 text-dark">{{ total_records }}</h3>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navigation / Quick Actions -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-6">
+      <a href="{{ url_for('appointment.book_appointment_view') }}" class="card ipcms-quick-card border-0 shadow-sm text-decoration-none h-100">
+        <div class="card-body d-flex align-items-center gap-3">
+          <div class="ipcms-stat-icon bg-info-subtle text-info">
+            <i class="bi bi-calendar-plus fs-4"></i>
+          </div>
+          <div>
+            <h6 class="fw-bold text-dark mb-0">Book Appointment</h6>
+            <p class="small text-muted mb-0">Schedule a new consultation slot with our medical specialists</p>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <div class="col-md-6">
+      <a href="{{ url_for('patient.edit_patient_view', patient_id=current_user.id) }}" class="card ipcms-quick-card border-0 shadow-sm text-decoration-none h-100">
+        <div class="card-body d-flex align-items-center gap-3">
+          <div class="ipcms-stat-icon bg-primary-subtle text-primary">
+            <i class="bi bi-person-gear fs-4"></i>
+          </div>
+          <div>
+            <h6 class="fw-bold text-dark mb-0">Update Demographics</h6>
+            <p class="small text-muted mb-0">Modify contact number, address, and profile settings</p>
+          </div>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <!-- Main section: Appointments & Status chart -->
+  <div class="row g-4 mb-4">
+    <!-- Appointments list -->
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm ipcms-stat-card h-100">
+        <div class="card-header bg-transparent border-bottom pt-3 pb-2 px-4 d-flex justify-content-between align-items-center">
+          <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-calendar-check me-2 text-info"></i>My Consultation Log</h6>
         </div>
         <div class="card-body px-4">
           {% if my_appointments %}
@@ -64,19 +142,34 @@
                     <th>Date</th>
                     <th>Time</th>
                     <th>Status</th>
+                    <th class="text-end">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {% for appt in my_appointments %}
                   <tr>
-                    <td>Dr. #{{ appt.doctor_id }}</td>
-                    <td>{{ appt.appointment_date.strftime('%d %b %Y') }}</td>
-                    <td>{{ appt.appointment_time.strftime('%I:%M %p') }}</td>
+                    <td>
+                      <a href="{{ url_for('doctor.view_doctor_view', doctor_id=appt.doctor_id) }}" class="fw-semibold text-decoration-none text-dark hover-success">Dr. {{ appt.doctor.full_name }}</a>
+                    </td>
+                    <td class="fw-semibold">{{ appt.appointment_date.strftime('%d %b %Y') }}</td>
+                    <td class="text-primary"><i class="bi bi-clock me-1"></i>{{ appt.appointment_time.strftime('%I:%M %p') }}</td>
                     <td>
                       {% set sc = {'Confirmed':'success','Completed':'info','Cancelled':'danger','Pending':'warning'} %}
-                      <span class="badge bg-{{ sc.get(appt.status,'secondary') }}-subtle text-{{ sc.get(appt.status,'secondary') }}">
+                      <span class="badge bg-{{ sc.get(appt.status,'secondary') }}-subtle text-{{ sc.get(appt.status,'secondary') }} px-2 py-1 rounded-pill">
                         {{ appt.status }}
                       </span>
+                    </td>
+                    <td class="text-end">
+                      {% if appt.status in ['Pending', 'Confirmed'] %}
+                      <form action="{{ url_for('appointment.cancel_appointment_view', appointment_id=appt.id) }}" method="POST" class="d-inline text-end" onsubmit="return confirm('Are you sure you want to cancel this appointment?');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-outline-danger btn-sm py-0 px-1" title="Cancel Appointment">
+                          <i class="bi bi-x-circle small"></i>
+                        </button>
+                      </form>
+                      {% else %}
+                        -
+                      {% endif %}
                     </td>
                   </tr>
                   {% endfor %}
@@ -85,37 +178,56 @@
             </div>
           {% else %}
             <div class="text-center py-5 text-muted">
-              <i class="bi bi-calendar-x fs-1 d-block mb-2"></i>No appointments yet
+              <i class="bi bi-calendar-x fs-1 d-block mb-2"></i>No appointments scheduled yet.
             </div>
           {% endif %}
         </div>
       </div>
     </div>
 
-    <!-- Recent Medical Records -->
-    <div class="col-lg-5">
-      <div class="card border-0 shadow-sm h-100">
-        <div class="card-header bg-transparent border-bottom-0 pt-3 pb-0 px-4">
-          <h6 class="fw-bold mb-0"><i class="bi bi-file-medical me-2 text-success"></i>My Medical History</h6>
+    <!-- Status Chart -->
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm ipcms-stat-card h-100">
+        <div class="card-header bg-transparent border-bottom pt-3 pb-2 px-4">
+          <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-pie-chart-fill me-2 text-info"></i>Sessions Breakdown</h6>
+        </div>
+        <div class="card-body d-flex justify-content-center align-items-center" style="height: 250px;">
+          <canvas id="patientStatusChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lower section: Medical Records -->
+  <div class="row g-4">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm ipcms-stat-card">
+        <div class="card-header bg-transparent border-bottom pt-3 pb-2 px-4">
+          <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-file-medical me-2 text-success"></i>My Medical History</h6>
         </div>
         <div class="card-body px-4">
           {% if my_records %}
-            {% for rec in my_records %}
-            <div class="ipcms-record-item mb-3 p-3 rounded-3 bg-light">
-              <p class="small text-muted mb-1">
-                <i class="bi bi-calendar3 me-1"></i>{{ rec.visit_date.strftime('%d %b %Y') }}
-              </p>
-              <p class="small fw-semibold text-dark mb-1">{{ rec.diagnosis }}</p>
-              {% if rec.treatment_plan %}
-                <p class="small text-muted mb-0 text-truncate" title="{{ rec.treatment_plan }}">
-                  <i class="bi bi-capsule me-1 text-success"></i>{{ rec.treatment_plan }}
-                </p>
-              {% endif %}
+            <div class="row g-3">
+              {% for rec in my_records %}
+              <div class="col-md-6 col-lg-4">
+                <div class="ipcms-record-item p-3 rounded-3 bg-light h-100">
+                  <p class="small text-muted mb-1">
+                    <i class="bi bi-calendar3 me-1"></i>{{ rec.visit_date.strftime('%d %b %Y') }}
+                  </p>
+                  <p class="small fw-semibold text-dark mb-1"><strong>Diagnosis:</strong> {{ rec.diagnosis }}</p>
+                  <p class="small text-muted mb-1"><strong>Symptoms:</strong> {{ rec.symptoms }}</p>
+                  {% if rec.treatment_plan %}
+                    <p class="small text-muted mb-0 text-truncate" title="{{ rec.treatment_plan }}">
+                      <i class="bi bi-capsule me-1 text-success"></i><strong>Treatment:</strong> {{ rec.treatment_plan }}
+                    </p>
+                  {% endif %}
+                </div>
+              </div>
+              {% endfor %}
             </div>
-            {% endfor %}
           {% else %}
-            <div class="text-center py-5 text-muted">
-              <i class="bi bi-file-earmark-medical fs-1 d-block mb-2"></i>No records
+            <div class="text-center py-4 text-muted">
+              <i class="bi bi-file-earmark-medical fs-1 d-block mb-2"></i>No medical history records registered.
             </div>
           {% endif %}
         </div>
@@ -124,4 +236,33 @@
   </div>
 
 </div>
+
+<!-- ChartJS Library Integration -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const statusData = {
+      labels: [{% for s in status_chart.keys() %}'{{ s }}',{% endfor %}],
+      datasets: [{
+        data: [{% for c in status_chart.values() %}{{ c }},{% endfor %}],
+        backgroundColor: ['#f5af19', '#38ef7d', '#11998e', '#ff4b5c'],
+        borderWidth: 0
+      }]
+    };
+
+    new Chart(document.getElementById('patientStatusChart'), {
+      type: 'doughnut',
+      data: statusData,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom'
+          }
+        }
+      }
+    });
+  });
+</script>
 {% endblock %}

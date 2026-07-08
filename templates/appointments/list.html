@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+
+  <!-- Header Section -->
+  <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+    <div>
+      <h2 class="fw-bold mb-0 text-dark"><i class="bi bi-calendar-check-fill me-2 text-info"></i>Appointment Directory</h2>
+      <p class="text-muted small mb-0">Browse, search, and manage clinical schedules and sessions</p>
+    </div>
+    {% if current_user.role.name in ['Admin', 'Nurse', 'Patient'] %}
+    <a href="{{ url_for('appointment.book_appointment_view') }}" class="btn ipcms-btn-primary px-3 py-2 fw-semibold" id="btnBookAppointment">
+      <i class="bi bi-calendar-plus me-1"></i>Book Appointment
+    </a>
+    {% endif %}
+  </div>
+
+  <!-- Search & Filter Controls -->
+  <div class="card border-0 shadow-sm mb-4 bg-light">
+    <div class="card-body py-3">
+      <form method="GET" action="{{ url_for('appointment.list_appointments_view') }}" class="row g-3 align-items-center">
+        <!-- Date -->
+        <div class="col-lg-3 col-md-6">
+          <div class="input-group">
+            <span class="input-group-text bg-white small text-muted">Date</span>
+            <input type="date" name="date" value="{{ date_str }}" class="form-control">
+          </div>
+        </div>
+
+        <!-- Doctor -->
+        <div class="col-lg-3 col-md-6">
+          <div class="input-group">
+            <span class="input-group-text bg-white small text-muted">Doctor</span>
+            <select name="doctor_id" class="form-select">
+              <option value="">All Doctors</option>
+              {% for d in doctors %}
+                <option value="{{ d.id }}" {% if doctor_id == d.id %}selected{% endif %}>Dr. {{ d.full_name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <!-- Patient -->
+        <div class="col-lg-3 col-md-6">
+          <div class="input-group">
+            <span class="input-group-text bg-white small text-muted">Patient</span>
+            <select name="patient_id" class="form-select">
+              <option value="">All Patients</option>
+              {% for p in patients %}
+                <option value="{{ p.id }}" {% if patient_id == p.id %}selected{% endif %}>{{ p.full_name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <!-- Status -->
+        <div class="col-lg-2 col-md-6">
+          <select name="status" class="form-select">
+            <option value="">All Statuses</option>
+            <option value="Pending" {% if status == 'Pending' %}selected{% endif %}>Pending</option>
+            <option value="Confirmed" {% if status == 'Confirmed' %}selected{% endif %}>Confirmed</option>
+            <option value="Completed" {% if status == 'Completed' %}selected{% endif %}>Completed</option>
+            <option value="Cancelled" {% if status == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+          </select>
+        </div>
+
+        <!-- Buttons -->
+        <div class="col-lg-1 col-md-12 d-flex gap-2">
+          <button type="submit" class="btn btn-info w-100 fw-semibold text-white">Filter</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Appointments List Card -->
+  <div class="card border-0 shadow-sm ipcms-stat-card">
+    <div class="card-body p-0">
+      {% if appointments %}
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th scope="col" class="ps-4">ID</th>
+              <th scope="col">Patient</th>
+              <th scope="col">Doctor</th>
+              <th scope="col">Date</th>
+              <th scope="col">Time</th>
+              <th scope="col">Status</th>
+              <th scope="col" class="text-end pe-4">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for appt in appointments %}
+            <tr id="appt-row-{{ appt.id }}">
+              <td class="ps-4 text-muted small fw-semibold">#{{ appt.id }}</td>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <div class="ipcms-avatar-sm flex-shrink-0" style="width: 28px; height: 28px; font-size: 0.75rem;">
+                    {{ appt.patient.first_name[0] }}{{ appt.patient.last_name[0] }}
+                  </div>
+                  <div>
+                    <a href="{{ url_for('patient.view_patient_view', patient_id=appt.patient_id) }}" class="fw-bold text-decoration-none text-dark hover-primary">{{ appt.patient.full_name }}</a>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <a href="{{ url_for('doctor.view_doctor_view', doctor_id=appt.doctor_id) }}" class="fw-semibold text-decoration-none text-dark hover-success">Dr. {{ appt.doctor.full_name }}</a>
+              </td>
+              <td class="fw-semibold text-dark">{{ appt.appointment_date.strftime('%d %b %Y') }}</td>
+              <td class="text-primary"><i class="bi bi-clock me-1"></i>{{ appt.appointment_time.strftime('%I:%M %p') }}</td>
+              <td>
+                {% set sc = {'Confirmed':'success','Completed':'info','Cancelled':'danger','Pending':'warning'} %}
+                <span class="badge bg-{{ sc.get(appt.status,'secondary') }}-subtle text-{{ sc.get(appt.status,'secondary') }} px-2 py-1 rounded-pill">
+                  {{ appt.status }}
+                </span>
+              </td>
+              <td class="text-end pe-4">
+                <div class="d-flex justify-content-end gap-1">
+                  {% if current_user.role.name in ['Admin', 'Nurse'] %}
+                  <a href="{{ url_for('appointment.edit_appointment_view', appointment_id=appt.id) }}" class="btn btn-outline-primary btn-sm" title="Reschedule Appointment">
+                    <i class="bi bi-calendar-event"></i>
+                  </a>
+                  {% endif %}
+                  {% if appt.status in ['Pending', 'Confirmed'] %}
+                  <form action="{{ url_for('appointment.cancel_appointment_view', appointment_id=appt.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to cancel this appointment?');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-outline-danger btn-sm" title="Cancel Appointment">
+                      <i class="bi bi-x-circle"></i>
+                    </button>
+                  </form>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="text-center py-5 text-muted">
+        <i class="bi bi-calendar-x fs-1 d-block mb-3 text-secondary"></i>
+        <h5 class="fw-bold">No Appointments Scheduled</h5>
+        <p class="small mb-0">Try adjusting your filters or book a new appointment.</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Pagination Footer -->
+    {% if total_pages > 1 %}
+    <div class="card-footer bg-transparent border-top-0 d-flex align-items-center justify-content-between px-4 py-3">
+      <div class="small text-muted">
+        Showing <strong>{{ appointments|length }}</strong> of <strong>{{ total }}</strong> appointment records
+      </div>
+      <nav aria-label="Appointment results pages">
+        <ul class="pagination pagination-sm mb-0">
+          <li class="page-item {% if page == 1 %}disabled{% endif %}">
+            <a class="page-link" href="{{ url_for('appointment.list_appointments_view', page=page-1, doctor_id=doctor_id, patient_id=patient_id, status=status, date=date_str) }}" aria-label="Previous">
+              <span aria-hidden="true">&laquo;</span>
+            </a>
+          </li>
+          
+          {% for p in range(1, total_pages + 1) %}
+          <li class="page-item {% if p == page %}active{% endif %}">
+            <a class="page-link" href="{{ url_for('appointment.list_appointments_view', page=p, doctor_id=doctor_id, patient_id=patient_id, status=status, date=date_str) }}">{{ p }}</a>
+          </li>
+          {% endfor %}
+
+          <li class="page-item {% if page == total_pages %}disabled{% endif %}">
+            <a class="page-link" href="{{ url_for('appointment.list_appointments_view', page=page+1, doctor_id=doctor_id, patient_id=patient_id, status=status, date=date_str) }}" aria-label="Next">
+              <span aria-hidden="true">&raquo;</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+    {% elif appointments %}
+    <div class="card-footer bg-transparent border-top-0 px-4 py-3">
+      <div class="small text-muted text-center">
+        Showing all <strong>{{ total }}</strong> scheduled sessions
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

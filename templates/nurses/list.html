@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+
+  <!-- Header Section -->
+  <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+    <div>
+      <h2 class="fw-bold mb-0 text-dark"><i class="bi bi-heart-pulse-fill me-2 text-warning"></i>Nurse Directory</h2>
+      <p class="text-muted small mb-0">Browse, search, and manage system nursing staff</p>
+    </div>
+    {% if current_user.role.name == 'Admin' %}
+    <a href="{{ url_for('nurse.add_nurse_view') }}" class="btn ipcms-btn-primary px-3 py-2 fw-semibold" id="btnAddNurse">
+      <i class="bi bi-person-plus me-1"></i>Add Nurse
+    </a>
+    {% endif %}
+  </div>
+
+  <!-- Search & Filter Controls -->
+  <div class="card border-0 shadow-sm mb-4 bg-light">
+    <div class="card-body py-3">
+      <form method="GET" action="{{ url_for('nurse.list_nurses_view') }}" class="row g-3 align-items-center">
+        <!-- Search input -->
+        <div class="col-lg-5 col-md-6">
+          <div class="input-group">
+            <span class="input-group-text bg-white border-end-0">
+              <i class="bi bi-search text-muted"></i>
+            </span>
+            <input type="text" name="q" value="{{ q }}" class="form-control border-start-0" placeholder="Search by name, shift, or department..." aria-label="Search nurses">
+          </div>
+        </div>
+
+        <!-- Sorting Column -->
+        <div class="col-lg-3 col-md-3">
+          <div class="input-group">
+            <span class="input-group-text bg-white small text-muted">Sort By</span>
+            <select name="sort" class="form-select">
+              <option value="last_name" {% if sort == 'last_name' %}selected{% endif %}>Last Name</option>
+              <option value="first_name" {% if sort == 'first_name' %}selected{% endif %}>First Name</option>
+              <option value="shift" {% if sort == 'shift' %}selected{% endif %}>Shift</option>
+              <option value="department_id" {% if sort == 'department_id' %}selected{% endif %}>Department</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Sorting Direction -->
+        <div class="col-lg-2 col-md-3">
+          <select name="direction" class="form-select">
+            <option value="asc" {% if direction == 'asc' %}selected{% endif %}>Ascending</option>
+            <option value="desc" {% if direction == 'desc' %}selected{% endif %}>Descending</option>
+          </select>
+        </div>
+
+        <!-- Buttons -->
+        <div class="col-lg-2 col-md-12 d-flex gap-2">
+          <button type="submit" class="btn btn-warning w-100 fw-semibold text-dark">Filter</button>
+          {% if q or sort != 'last_name' or direction != 'asc' %}
+          <a href="{{ url_for('nurse.list_nurses_view') }}" class="btn btn-outline-secondary" title="Reset Filters"><i class="bi bi-arrow-counterclockwise"></i></a>
+          {% endif %}
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Nurse List Card -->
+  <div class="card border-0 shadow-sm ipcms-stat-card">
+    <div class="card-body p-0">
+      {% if nurses %}
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th scope="col" class="ps-4">ID</th>
+              <th scope="col">Name</th>
+              <th scope="col">Department</th>
+              <th scope="col">Shift</th>
+              <th scope="col">Contact</th>
+              <th scope="col">Email</th>
+              <th scope="col" class="text-end pe-4">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for n in nurses %}
+            <tr id="nurse-row-{{ n.id }}">
+              <td class="ps-4 text-muted small fw-semibold">#{{ n.id }}</td>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <div class="ipcms-avatar-sm flex-shrink-0" style="width: 32px; height: 32px; font-size: 0.8rem; background: linear-gradient(135deg, #f12711 0%, #f5af19 100%);">
+                    {{ n.first_name[0] }}{{ n.last_name[0] }}
+                  </div>
+                  <div>
+                    <a href="{{ url_for('nurse.view_nurse_view', nurse_id=n.id) }}" class="fw-bold text-decoration-none text-dark hover-warning">{{ n.full_name }}</a>
+                  </div>
+                </div>
+              </td>
+              <td>
+                {% if n.department %}
+                  <span class="badge bg-warning-subtle text-warning px-2 py-1">{{ n.department.name }}</span>
+                {% else %}
+                  <span class="badge bg-secondary-subtle text-secondary px-2 py-1">N/A</span>
+                {% endif %}
+              </td>
+              <td>
+                {% set sc = {'Morning':'primary','Evening':'warning','Night':'dark'} %}
+                <span class="badge bg-{{ sc.get(n.shift,'secondary') }} text-{% if n.shift == 'Evening' %}dark{% else %}white{% endif %} px-2 py-1">{{ n.shift }}</span>
+              </td>
+              <td class="small">{{ n.contact_number }}</td>
+              <td class="small text-muted">{% if n.user %}{{ n.user.email }}{% else %}N/A{% endif %}</td>
+              <td class="text-end pe-4">
+                <div class="d-flex justify-content-end gap-1">
+                  <a href="{{ url_for('nurse.view_nurse_view', nurse_id=n.id) }}" class="btn btn-outline-info btn-sm" title="View Nurse Profile">
+                    <i class="bi bi-eye"></i>
+                  </a>
+                  {% if current_user.role.name == 'Admin' or (current_user.role.name == 'Nurse' and current_user.id == n.id) %}
+                  <a href="{{ url_for('nurse.edit_nurse_view', nurse_id=n.id) }}" class="btn btn-outline-primary btn-sm" title="Edit Nurse Profile">
+                    <i class="bi bi-pencil"></i>
+                  </a>
+                  {% endif %}
+                  {% if current_user.role.name == 'Admin' %}
+                  <form action="{{ url_for('nurse.delete_nurse_view', nurse_id=n.id) }}" method="POST" class="d-inline delete-nurse-form" onsubmit="return confirm('Are you sure you want to delete nurse {{ n.full_name }}? This will soft-delete their user account.');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete Nurse">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </form>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="text-center py-5 text-muted">
+        <i class="bi bi-heart-pulse fs-1 d-block mb-3 text-secondary"></i>
+        <h5 class="fw-bold">No Nurses Found</h5>
+        <p class="small mb-0">Try adjusting your search criteria or register a new nurse.</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Pagination Footer -->
+    {% if total_pages > 1 %}
+    <div class="card-footer bg-transparent border-top-0 d-flex align-items-center justify-content-between px-4 py-3">
+      <div class="small text-muted">
+        Showing <strong>{{ nurses|length }}</strong> of <strong>{{ total }}</strong> nurse records
+      </div>
+      <nav aria-label="Nurse search results pages">
+        <ul class="pagination pagination-sm mb-0">
+          <li class="page-item {% if page == 1 %}disabled{% endif %}">
+            <a class="page-link" href="{{ url_for('nurse.list_nurses_view', page=page-1, q=q, sort=sort, direction=direction) }}" aria-label="Previous">
+              <span aria-hidden="true">&laquo;</span>
+            </a>
+          </li>
+          
+          {% for p in range(1, total_pages + 1) %}
+          <li class="page-item {% if p == page %}active{% endif %}">
+            <a class="page-link" href="{{ url_for('nurse.list_nurses_view', page=p, q=q, sort=sort, direction=direction) }}">{{ p }}</a>
+          </li>
+          {% endfor %}
+
+          <li class="page-item {% if page == total_pages %}disabled{% endif %}">
+            <a class="page-link" href="{{ url_for('nurse.list_nurses_view', page=page+1, q=q, sort=sort, direction=direction) }}" aria-label="Next">
+              <span aria-hidden="true">&raquo;</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+    {% elif nurses %}
+    <div class="card-footer bg-transparent border-top-0 px-4 py-3">
+      <div class="small text-muted text-center">
+        Showing all <strong>{{ total }}</strong> nurse records
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

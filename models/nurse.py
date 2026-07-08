@@ -9,6 +9,7 @@ class Nurse(db.Model):
     last_name = db.Column(db.String(50), nullable=False)
     department_id = db.Column(db.Integer, db.ForeignKey('departments.id', ondelete='RESTRICT', onupdate='CASCADE'), nullable=False)
     contact_number = db.Column(db.String(20), nullable=False)
+    shift = db.Column(db.Enum('Morning', 'Evening', 'Night'), nullable=False, default='Morning')
 
     # Relationships
     # 1:1 relation with User
