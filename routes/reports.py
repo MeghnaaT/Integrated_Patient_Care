@@ -16,24 +16,12 @@ from models.patient import Patient
 reports_bp = Blueprint('reports', __name__)
 
 
-def roles_required(*role_names: str):
-    """Enforces specific role mappings for reports access."""
-    def decorator(f):
-        @wraps(f)
-        def decorated_function(*args, **kwargs):
-            if not current_user.is_authenticated:
-                return redirect(url_for('auth.login'))
-            user_role = current_user.role.name if current_user.role else None
-            if user_role not in role_names:
-                abort(403)
-            return f(*args, **kwargs)
-        return decorated_function
-    return decorator
+from utils.decorators import role_required
 
 
 @reports_bp.route('/', methods=['GET'])
 @login_required
-@roles_required('Admin', 'Doctor', 'Nurse')
+@role_required('Admin', 'Doctor', 'Nurse')
 def view_reports():
     """Generates monthly reports split into weekly slots matching mockups."""
     today = datetime.date.today()
@@ -123,3 +111,54 @@ def view_reports():
     }
 
     return render_template('reports/view.html', **context)
+
+
+@reports_bp.route('/search', methods=['GET', 'POST'])
+@login_required
+@role_required('Admin', 'Doctor', 'Nurse')
+def patient_search():
+    """Reports & Search module: search patient by ID or Name (matches Slide 43)."""
+    from forms.search_form import PatientSearchForm
+    from services.report_search_service import search_patients_by_id_or_name
+
+    form = PatientSearchForm()
+    patients = []
+    found_patient = None
+
+    query = request.args.get('query', '') or (form.query.data if request.method == 'POST' else '')
+    search_by = request.args.get('search_by', 'patient_id') or (form.search_by.data if request.method == 'POST' else 'patient_id')
+
+    if query:
+        form.query.data = query
+        form.search_by.data = search_by
+        patients = search_patients_by_id_or_name(query, search_by)
+        if patients:
+            found_patient = patients[0]
+
+    context = {
+        'title': 'Reports & Search',
+        'form': form,
+        'patients': patients,
+        'found_patient': found_patient,
+        'query': query
+    }
+    return render_template('reports/patient_search.html', **context)
+
+
+@reports_bp.route('/patient-report/<int:patient_id>', methods=['GET'])
+@login_required
+def generate_patient_report(patient_id: int):
+    """Generate printable/downloadable comprehensive medical report for a patient."""
+    from services.medical_history_service import get_complete_patient_history
+
+    if current_user.role.name == 'Patient' and current_user.id != patient_id:
+        abort(403)
+
+    history = get_complete_patient_history(patient_id)
+    context = {
+        'title': f"Medical Report - {history['patient'].full_name}",
+        'today': datetime.date.today(),
+        **history
+    }
+    return render_template('reports/patient_report.html', **context)
+

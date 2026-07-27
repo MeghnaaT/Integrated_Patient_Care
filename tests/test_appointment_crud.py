@@ -133,7 +133,7 @@ class TestAppointmentCRUD(unittest.TestCase):
         # 8. View doctor schedule agenda
         res = self.client.get(f'/appointment/doctor/2/schedule?date={date_str}')
         self.assertEqual(res.status_code, 200)
-        self.assertIn(b'Ravi Kumar', res.data)
+        self.assertIn(b'Rahul Kumar', res.data)
         print("OK: Doctor schedule daily agenda contains patient.")
 
         # 9. Cancel appointment

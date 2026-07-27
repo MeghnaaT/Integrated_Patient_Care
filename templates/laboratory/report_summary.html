@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <a href="{{ url_for('laboratory.list_reports') }}" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left me-1"></i> Back to Lab Reports
+    </a>
+    <button onclick="window.print()" class="btn btn-success fw-semibold">
+      <i class="bi bi-printer me-1"></i> Print Lab Report
+    </button>
+  </div>
+
+  <div class="card border-0 shadow-lg rounded-3 p-4 p-md-5 bg-white">
+    <div class="d-flex justify-content-between align-items-center border-bottom pb-4 mb-4">
+      <div>
+        <h3 class="fw-bold text-teal mb-1"><i class="bi bi-file-earmark-medical me-2"></i>Diagnostic Laboratory Report</h3>
+        <p class="text-muted small mb-0">IPCMS Clinical Pathology & Diagnostic Services</p>
+      </div>
+      <div class="text-end">
+        <span class="badge bg-teal fs-6 px-3 py-2">Report #{{"%05d" | format(report.id)}}</span>
+        <p class="text-muted small mb-0 mt-1">Date: <strong>{{ report.test_date.strftime('%d-%m-%Y') }}</strong></p>
+      </div>
+    </div>
+
+    <div class="row mb-4">
+      <div class="col-md-6 border-end">
+        <h6 class="text-uppercase text-muted small fw-bold mb-2">Patient Details</h6>
+        <h5 class="fw-bold text-dark mb-1">{{ report.patient.full_name }}</h5>
+        <p class="mb-1 text-muted small"><strong>ID:</strong> PAT100{{ report.patient.id }} | <strong>Age/Gender:</strong> {{ report.patient.age }} Yrs / {{ report.patient.gender }}</p>
+      </div>
+      <div class="col-md-6 ps-md-4">
+        <h6 class="text-uppercase text-muted small fw-bold mb-2">Referring Doctor</h6>
+        <h5 class="fw-bold text-primary mb-1">Dr. {{ report.doctor.first_name }} {{ report.doctor.last_name }}</h5>
+        <p class="mb-0 text-muted small"><strong>Department:</strong> {{ report.doctor.department.name if report.doctor.department else 'General Medicine' }}</p>
+      </div>
+    </div>
+
+    <div class="table-responsive mb-4">
+      <table class="table table-bordered align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Test Investigation</th>
+            <th>Test Date</th>
+            <th>Test Result Summary</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="fw-bold text-dark fs-6">{{ report.test_name }}</td>
+            <td class="text-muted">{{ report.test_date.strftime('%d-%m-%Y') }}</td>
+            <td>
+              {% if report.result == 'Normal' %}
+                <span class="badge bg-success fs-6 px-3 py-2">Normal</span>
+              {% elif report.result == 'Borderline' %}
+                <span class="badge bg-warning text-dark fs-6 px-3 py-2">Borderline</span>
+              {% else %}
+                <span class="badge bg-danger fs-6 px-3 py-2">{{ report.result }}</span>
+              {% endif %}
+            </td>
+            <td><span class="badge bg-light text-dark border">Completed</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    {% if report.remarks %}
+      <div class="card bg-light border-0 p-3 mb-4">
+        <h6 class="fw-bold text-dark mb-1"><i class="bi bi-card-text me-1"></i>Pathology Observations & Remarks:</h6>
+        <p class="mb-0 text-muted">{{ report.remarks }}</p>
+      </div>
+    {% endif %}
+
+    <div class="d-flex justify-content-between align-items-center border-top pt-4 mt-4">
+      <span class="text-muted small"><i class="bi bi-check-circle me-1 text-success"></i>Verified by Senior Pathologist</span>
+      <a href="{{ url_for('laboratory.request_lab_report') }}" class="btn btn-outline-primary btn-sm">
+        <i class="bi bi-plus-lg me-1"></i> Add Another Laboratory Report
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

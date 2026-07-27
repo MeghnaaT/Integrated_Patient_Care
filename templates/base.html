@@ -130,10 +130,47 @@
                   <i class="bi bi-heart-pulse-fill me-1"></i>Nurses
                 </a>
               </li>
+              <!-- Milestone 2 Clinical Management Nav Links -->
               <li class="nav-item">
-                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('reports') %}active{% endif %}"
-                   href="{{ url_for('reports.view_reports') }}">
-                  <i class="bi bi-file-earmark-bar-graph me-1"></i>Reports
+                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('ehr') %}active{% endif %}"
+                   href="{{ url_for('ehr.view_ehr', patient_id=4 if role != 'Patient' else current_user.id) }}">
+                  <i class="bi bi-card-checklist me-1"></i>EHR
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('consultation') %}active{% endif %}"
+                   href="{{ url_for('consultation.add_consultation') if role in ['Admin', 'Doctor'] else url_for('consultation.consultation_history', patient_id=current_user.id) }}">
+                  <i class="bi bi-stethoscope me-1"></i>Consultations
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('prescription') %}active{% endif %}"
+                   href="{{ url_for('prescription.list_prescriptions') }}">
+                  <i class="bi bi-capsule me-1"></i>Prescriptions
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('laboratory') %}active{% endif %}"
+                   href="{{ url_for('laboratory.list_reports') }}">
+                  <i class="bi bi-flask me-1"></i>Laboratory
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('medical_history') %}active{% endif %}"
+                   href="{{ url_for('medical_history.index') }}">
+                  <i class="bi bi-journal-medical me-1"></i>Medical History
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link {% if request.endpoint and request.endpoint == 'reports.patient_search' %}active{% endif %}"
+                   href="{{ url_for('reports.patient_search') }}">
+                  <i class="bi bi-search me-1"></i>Reports & Search
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link text-warning fw-semibold {% if request.endpoint and request.endpoint == 'dashboard.milestone2_dashboard' %}active{% endif %}"
+                   href="{{ url_for('dashboard.milestone2_dashboard') }}">
+                  <i class="bi bi-speedometer2 me-1"></i>M2 Dashboard
                 </a>
               </li>
             {% elif role == 'Patient' %}
@@ -141,6 +178,30 @@
                 <a class="nav-link {% if request.endpoint and request.endpoint.startswith('patient') %}active{% endif %}"
                    href="{{ url_for('patient.dashboard') }}">
                   <i class="bi bi-person-heart me-1"></i>My Dashboard
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('ehr') %}active{% endif %}"
+                   href="{{ url_for('ehr.view_ehr', patient_id=current_user.id) }}">
+                  <i class="bi bi-card-checklist me-1"></i>My EHR
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('medical_history') %}active{% endif %}"
+                   href="{{ url_for('medical_history.view_patient_history', patient_id=current_user.id) }}">
+                  <i class="bi bi-journal-medical me-1"></i>My Medical History
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('prescription') %}active{% endif %}"
+                   href="{{ url_for('prescription.list_prescriptions') }}">
+                  <i class="bi bi-capsule me-1"></i>My Prescriptions
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link {% if request.endpoint and request.endpoint.startswith('laboratory') %}active{% endif %}"
+                   href="{{ url_for('laboratory.list_reports') }}">
+                  <i class="bi bi-flask me-1"></i>My Lab Reports
                 </a>
               </li>
             {% endif %}

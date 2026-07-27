@@ -74,15 +74,26 @@ def create_app(config_name: str = 'default') -> Flask:
     from routes.patient import patient_bp
     from routes.appointment import appointment_bp
     from routes.reports import reports_bp
+    from routes.ehr import ehr_bp
+    from routes.consultation import consultation_bp
+    from routes.prescription import prescription_bp
+    from routes.lab import laboratory_bp
+    from routes.medical_history import medical_history_bp
 
-    app.register_blueprint(dashboard_bp)                      # / and /dashboard
-    app.register_blueprint(auth_bp,    url_prefix='/auth')    # /auth/login  /auth/logout
-    app.register_blueprint(admin_bp,   url_prefix='/admin')   # /admin/*
-    app.register_blueprint(doctor_bp,  url_prefix='/doctor')  # /doctor/*
-    app.register_blueprint(nurse_bp,   url_prefix='/nurse')   # /nurse/*
-    app.register_blueprint(patient_bp, url_prefix='/patient') # /patient/*
-    app.register_blueprint(appointment_bp, url_prefix='/appointment') # /appointment/*
-    app.register_blueprint(reports_bp, url_prefix='/reports') # /reports/*
+    app.register_blueprint(dashboard_bp)                                 # / and /dashboard
+    app.register_blueprint(auth_bp,            url_prefix='/auth')            # /auth/*
+    app.register_blueprint(admin_bp,           url_prefix='/admin')           # /admin/*
+    app.register_blueprint(doctor_bp,          url_prefix='/doctor')          # /doctor/*
+    app.register_blueprint(nurse_bp,           url_prefix='/nurse')           # /nurse/*
+    app.register_blueprint(patient_bp,         url_prefix='/patient')         # /patient/*
+    app.register_blueprint(appointment_bp,     url_prefix='/appointment')     # /appointment/*
+    app.register_blueprint(reports_bp,         url_prefix='/reports')         # /reports/*
+    app.register_blueprint(ehr_bp,             url_prefix='/ehr')             # /ehr/*
+    app.register_blueprint(consultation_bp,    url_prefix='/consultations')   # /consultations/*
+    app.register_blueprint(prescription_bp,    url_prefix='/prescriptions')   # /prescriptions/*
+    app.register_blueprint(laboratory_bp,      url_prefix='/laboratory')      # /laboratory/*
+    app.register_blueprint(medical_history_bp, url_prefix='/medical-history') # /medical-history/*
+
 
     # -------------------------------------------------------------------------
     # HTTP Error Handlers

@@ -18,25 +18,13 @@ from database.connection import db
 appointment_bp = Blueprint('appointment', __name__)
 
 
-def roles_required(*role_names: str):
-    """Decorator to enforce multiple roles."""
-    def decorator(f):
-        @wraps(f)
-        def decorated_function(*args, **kwargs):
-            if not current_user.is_authenticated:
-                return redirect(url_for('auth.login'))
-            user_role = current_user.role.name if current_user.role else None
-            if user_role not in role_names:
-                abort(403)
-            return f(*args, **kwargs)
-        return decorated_function
-    return decorator
+from utils.decorators import role_required
 
 
 @appointment_bp.route('/')
 @appointment_bp.route('/list')
 @login_required
-@roles_required('Admin', 'Nurse', 'Doctor')
+@role_required('Admin', 'Nurse', 'Doctor')
 def list_appointments_view():
     """Directory list of appointments with filters, search, and pagination."""
     from services.appointment_service import list_appointments
@@ -91,7 +79,7 @@ def list_appointments_view():
 
 @appointment_bp.route('/book', methods=['GET', 'POST'])
 @login_required
-@roles_required('Admin', 'Nurse', 'Patient')
+@role_required('Admin', 'Nurse', 'Patient')
 def book_appointment_view():
     """Book a new appointment."""
     from services.appointment_service import book_appointment
@@ -139,7 +127,7 @@ def book_appointment_view():
 
 @appointment_bp.route('/edit/<int:appointment_id>', methods=['GET', 'POST'])
 @login_required
-@roles_required('Admin', 'Nurse')
+@role_required('Admin', 'Nurse')
 def edit_appointment_view(appointment_id):
     """Reschedule or update status of an appointment."""
     from services.appointment_service import get_appointment, update_appointment
@@ -167,7 +155,7 @@ def edit_appointment_view(appointment_id):
 
 @appointment_bp.route('/cancel/<int:appointment_id>', methods=['POST'])
 @login_required
-@roles_required('Admin', 'Nurse', 'Patient')
+@role_required('Admin', 'Nurse', 'Patient')
 def cancel_appointment_view(appointment_id):
     """Cancel an appointment."""
     from services.appointment_service import get_appointment, cancel_appointment
@@ -187,7 +175,7 @@ def cancel_appointment_view(appointment_id):
 
 @appointment_bp.route('/doctor/<int:doctor_id>/schedule')
 @login_required
-@roles_required('Admin', 'Nurse', 'Doctor')
+@role_required('Admin', 'Nurse', 'Doctor')
 def doctor_schedule_view(doctor_id):
     """View the daily timetable schedule for a consulting doctor."""
     date_str = request.args.get('date', '').strip()

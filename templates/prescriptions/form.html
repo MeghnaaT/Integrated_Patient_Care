@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{{ url_for('dashboard.dashboard') }}">Dashboard</a></li>
+      <li class="breadcrumb-item"><a href="{{ url_for('prescription.list_prescriptions') }}">Prescriptions</a></li>
+      <li class="breadcrumb-item active" aria-current="page">New Prescription</li>
+    </ol>
+  </nav>
+
+  <h2 class="h3 fw-bold text-dark mb-4">
+    <i class="bi bi-capsule-prescription text-primary me-2"></i>Create Digital Prescription
+  </h2>
+
+  <div class="card border-0 shadow-sm rounded-3">
+    <div class="card-header bg-white py-3 border-0 border-bottom">
+      <h5 class="fw-bold text-primary mb-0">Prescription Details Form</h5>
+    </div>
+    <div class="card-body p-4">
+      <form method="POST">
+        {{ form.hidden_tag() }}
+        <div class="row g-3">
+          <div class="col-md-6">
+            {{ form.patient_id.label(class="form-label fw-semibold") }}
+            {{ form.patient_id(class="form-select") }}
+          </div>
+          <div class="col-md-6">
+            {{ form.prescription_date.label(class="form-label fw-semibold") }}
+            {{ form.prescription_date(class="form-control", type="date") }}
+          </div>
+
+          <div class="col-md-6">
+            {{ form.doctor_id.label(class="form-label fw-semibold") }}
+            {{ form.doctor_id(class="form-select") }}
+          </div>
+          <div class="col-md-6">
+            {{ form.special_instructions.label(class="form-label fw-semibold") }}
+            {{ form.special_instructions(class="form-control") }}
+          </div>
+
+          <hr class="my-4">
+          <h6 class="fw-bold text-dark mb-3"><i class="bi bi-list-check me-2"></i>Prescribed Medicines List</h6>
+
+          <!-- Item 1 -->
+          <div class="col-md-3">
+            {{ form.medicine_name_1.label(class="form-label fw-semibold") }}
+            {{ form.medicine_name_1(class="form-control") }}
+          </div>
+          <div class="col-md-3">
+            {{ form.dosage_1.label(class="form-label fw-semibold") }}
+            {{ form.dosage_1(class="form-control") }}
+          </div>
+          <div class="col-md-3">
+            {{ form.frequency_1.label(class="form-label fw-semibold") }}
+            {{ form.frequency_1(class="form-control") }}
+          </div>
+          <div class="col-md-3">
+            {{ form.duration_1.label(class="form-label fw-semibold") }}
+            {{ form.duration_1(class="form-control") }}
+          </div>
+
+          <!-- Item 2 -->
+          <div class="col-md-3">
+            {{ form.medicine_name_2.label(class="form-label text-muted") }}
+            {{ form.medicine_name_2(class="form-control") }}
+          </div>
+          <div class="col-md-3">
+            {{ form.dosage_2.label(class="form-label text-muted") }}
+            {{ form.dosage_2(class="form-control") }}
+          </div>
+          <div class="col-md-3">
+            {{ form.frequency_2.label(class="form-label text-muted") }}
+            {{ form.frequency_2(class="form-control") }}
+          </div>
+          <div class="col-md-3">
+            {{ form.duration_2.label(class="form-label text-muted") }}
+            {{ form.duration_2(class="form-control") }}
+          </div>
+
+          <div class="col-12 mt-4 d-flex gap-2">
+            {{ form.submit(class="btn btn-success fw-semibold px-4") }}
+            <a href="{{ url_for('prescription.list_prescriptions') }}" class="btn btn-light border px-4">Cancel</a>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

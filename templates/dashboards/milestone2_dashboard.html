@@ -1,0 +1,297 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <!-- Top Banner Header (Matches Slide 51) -->
+  <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+    <div>
+      <h2 class="h3 fw-bold text-dark mb-1">
+        <i class="bi bi-speedometer2 text-primary me-2"></i>Milestone 2 Dashboard
+      </h2>
+      <p class="text-success small fw-semibold mb-0">
+        <i class="bi bi-check-circle-fill me-1"></i>All clinical modules working successfully
+      </p>
+    </div>
+    <div class="text-end">
+      <span class="badge bg-light text-dark border px-3 py-2 fs-6">
+        <i class="bi bi-calendar-event me-1"></i> 22 July 2026
+      </span>
+    </div>
+  </div>
+
+  <!-- 5 Executive Metrics Cards (Matches Slide 51) -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-2-4 col-sm-6">
+      <div class="card border-0 shadow-sm rounded-3 p-3 bg-white h-100">
+        <div class="d-flex align-items-center">
+          <div class="bg-primary text-white rounded-3 p-3 me-3">
+            <i class="bi bi-people-fill fs-3"></i>
+          </div>
+          <div>
+            <h6 class="text-muted small mb-1">Total Patients</h6>
+            <h3 class="fw-bold mb-0 text-dark">{{ total_patients }}</h3>
+            <span class="small text-muted">Registered Patients</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-2-4 col-sm-6">
+      <div class="card border-0 shadow-sm rounded-3 p-3 bg-white h-100">
+        <div class="d-flex align-items-center">
+          <div class="bg-success text-white rounded-3 p-3 me-3">
+            <i class="bi bi-stethoscope fs-3"></i>
+          </div>
+          <div>
+            <h6 class="text-muted small mb-1">Consultations</h6>
+            <h3 class="fw-bold mb-0 text-dark">{{ total_consultations }}</h3>
+            <span class="small text-muted">Total Consultations</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-2-4 col-sm-6">
+      <div class="card border-0 shadow-sm rounded-3 p-3 bg-white h-100">
+        <div class="d-flex align-items-center">
+          <div class="bg-warning text-dark rounded-3 p-3 me-3">
+            <i class="bi bi-capsule fs-3"></i>
+          </div>
+          <div>
+            <h6 class="text-muted small mb-1">Prescriptions</h6>
+            <h3 class="fw-bold mb-0 text-dark">{{ total_prescriptions }}</h3>
+            <span class="small text-muted">Total Prescriptions</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-2-4 col-sm-6">
+      <div class="card border-0 shadow-sm rounded-3 p-3 bg-white h-100">
+        <div class="d-flex align-items-center">
+          <div class="bg-info text-white rounded-3 p-3 me-3">
+            <i class="bi bi-flask fs-3"></i>
+          </div>
+          <div>
+            <h6 class="text-muted small mb-1">Laboratory Tests</h6>
+            <h3 class="fw-bold mb-0 text-dark">{{ total_labs }}</h3>
+            <span class="small text-muted">Total Tests</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-2-4 col-sm-6">
+      <div class="card border-0 shadow-sm rounded-3 p-3 bg-white h-100">
+        <div class="d-flex align-items-center">
+          <div class="bg-danger text-white rounded-3 p-3 me-3">
+            <i class="bi bi-file-earmark-bar-graph fs-3"></i>
+          </div>
+          <div>
+            <h6 class="text-muted small mb-1">Reports Generated</h6>
+            <h3 class="fw-bold mb-0 text-dark">{{ total_reports }}</h3>
+            <span class="small text-muted">Total Reports</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3 Recent Summary Tables Row (Matches Slide 51) -->
+  <div class="row g-4 mb-4">
+    <!-- Recent Consultations -->
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm rounded-3 h-100">
+        <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+          <h6 class="fw-bold text-primary mb-0"><i class="bi bi-stethoscope me-1"></i>Recent Consultations</h6>
+          <a href="{{ url_for('consultation.add_consultation') }}" class="btn btn-sm btn-link text-decoration-none">View All</a>
+        </div>
+        <div class="card-body p-0">
+          <table class="table table-hover align-middle mb-0 small">
+            <thead class="table-light">
+              <tr>
+                <th>Date</th>
+                <th>Patient</th>
+                <th>Diagnosis</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for c in recent_consultations %}
+                <tr>
+                  <td class="text-muted">{{ c.consultation_date.strftime('%d-%m-%Y') }}</td>
+                  <td class="fw-semibold">{{ c.patient.full_name }}</td>
+                  <td><span class="badge bg-primary">{{ c.diagnosis }}</span></td>
+                </tr>
+              {% else %}
+                <tr><td colspan="3" class="text-center text-muted py-3">No consultations logged.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Prescriptions -->
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm rounded-3 h-100">
+        <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+          <h6 class="fw-bold text-success mb-0"><i class="bi bi-capsule me-1"></i>Recent Prescriptions</h6>
+          <a href="{{ url_for('prescription.list_prescriptions') }}" class="btn btn-sm btn-link text-decoration-none">View All</a>
+        </div>
+        <div class="card-body p-0">
+          <table class="table table-hover align-middle mb-0 small">
+            <thead class="table-light">
+              <tr>
+                <th>Date</th>
+                <th>Patient</th>
+                <th>Medicine</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for p in recent_prescriptions %}
+                <tr>
+                  <td class="text-muted">{{ p.prescription_date.strftime('%d-%m-%Y') }}</td>
+                  <td class="fw-semibold">{{ p.patient.full_name }}</td>
+                  <td>
+                    {% if p.items %}
+                      {{ p.items[0].medicine_name }}
+                    {% else %}
+                      Prescription Rx
+                    {% endif %}
+                  </td>
+                </tr>
+              {% else %}
+                <tr><td colspan="3" class="text-center text-muted py-3">No prescriptions logged.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Laboratory Reports -->
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm rounded-3 h-100">
+        <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+          <h6 class="fw-bold text-teal mb-0"><i class="bi bi-flask me-1"></i>Recent Laboratory Reports</h6>
+          <a href="{{ url_for('laboratory.list_reports') }}" class="btn btn-sm btn-link text-decoration-none">View All</a>
+        </div>
+        <div class="card-body p-0">
+          <table class="table table-hover align-middle mb-0 small">
+            <thead class="table-light">
+              <tr>
+                <th>Date</th>
+                <th>Patient</th>
+                <th>Test</th>
+                <th>Result</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for l in recent_labs %}
+                <tr>
+                  <td class="text-muted">{{ l.test_date.strftime('%d-%m-%Y') }}</td>
+                  <td class="fw-semibold">{{ l.patient.full_name }}</td>
+                  <td>{{ l.test_name }}</td>
+                  <td>
+                    {% if l.result == 'Normal' %}
+                      <span class="badge bg-success">Normal</span>
+                    {% else %}
+                      <span class="badge bg-warning text-dark">{{ l.result }}</span>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% else %}
+                <tr><td colspan="4" class="text-center text-muted py-3">No lab reports logged.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Section: Quick Links & System Status Checklist (Matches Slide 51) -->
+  <div class="row g-4">
+    <!-- Quick Medical History Lookup -->
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm rounded-3 h-100">
+        <div class="card-header bg-white py-3 border-0">
+          <h6 class="fw-bold text-dark mb-0"><i class="bi bi-journal-check me-2 text-primary"></i>Patient Medical History Summary</h6>
+        </div>
+        <div class="card-body p-3">
+          <p class="text-muted small mb-3">Quickly search and load a patient's complete clinical record.</p>
+          <a href="{{ url_for('medical_history.view_patient_history', patient_id=4) }}" class="btn btn-outline-primary w-100 text-start d-flex justify-content-between align-items-center mb-2">
+            <span><strong>Rahul Kumar</strong> (PAT1001)</span>
+            <i class="bi bi-chevron-right"></i>
+          </a>
+          <a href="{{ url_for('medical_history.index') }}" class="btn btn-light border w-100 text-center fw-semibold">
+            Search All Patients
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Reports & Search Box -->
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm rounded-3 h-100">
+        <div class="card-header bg-white py-3 border-0">
+          <h6 class="fw-bold text-dark mb-0"><i class="bi bi-search me-2 text-success"></i>Reports & Search</h6>
+        </div>
+        <div class="card-body p-3">
+          <form action="{{ url_for('reports.patient_search') }}" method="GET" class="mb-3">
+            <div class="input-group">
+              <input type="text" name="query" class="form-control" placeholder="Enter Patient ID (P1001)...">
+              <button type="submit" class="btn btn-primary">Search</button>
+            </div>
+          </form>
+          <div class="d-flex gap-2">
+            <a href="{{ url_for('reports.generate_patient_report', patient_id=4) }}" class="btn btn-success btn-sm w-50">Generate Report</a>
+            <a href="{{ url_for('ehr.view_ehr', patient_id=4) }}" class="btn btn-outline-primary btn-sm w-50">View Full EHR</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- System Status Checklist Widget (Matches Slide 51) -->
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm rounded-3 h-100 bg-white">
+        <div class="card-header bg-white py-3 border-0">
+          <h6 class="fw-bold text-dark mb-0"><i class="bi bi-check2-square me-2 text-success"></i>System Status</h6>
+        </div>
+        <div class="card-body p-3">
+          <ul class="list-group list-group-flush mb-3 small">
+            <li class="list-group-item d-flex justify-content-between align-items-center border-0 px-0 py-1">
+              <span><i class="bi bi-check-circle-fill text-success me-2"></i>EHR Module</span>
+              <span class="badge bg-success-subtle text-success border border-success">Working</span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center border-0 px-0 py-1">
+              <span><i class="bi bi-check-circle-fill text-success me-2"></i>Consultation Module</span>
+              <span class="badge bg-success-subtle text-success border border-success">Working</span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center border-0 px-0 py-1">
+              <span><i class="bi bi-check-circle-fill text-success me-2"></i>Prescription Module</span>
+              <span class="badge bg-success-subtle text-success border border-success">Working</span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center border-0 px-0 py-1">
+              <span><i class="bi bi-check-circle-fill text-success me-2"></i>Laboratory Module</span>
+              <span class="badge bg-success-subtle text-success border border-success">Working</span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center border-0 px-0 py-1">
+              <span><i class="bi bi-check-circle-fill text-success me-2"></i>Medical History Module</span>
+              <span class="badge bg-success-subtle text-success border border-success">Working</span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center border-0 px-0 py-1">
+              <span><i class="bi bi-check-circle-fill text-success me-2"></i>Reports & Search Module</span>
+              <span class="badge bg-success-subtle text-success border border-success">Working</span>
+            </li>
+          </ul>
+
+          <div class="alert alert-success border-0 rounded-3 p-2 text-center mb-0">
+            <span class="fw-bold small"><i class="bi bi-trophy-fill me-1"></i>Milestone 2 Completed Successfully!</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

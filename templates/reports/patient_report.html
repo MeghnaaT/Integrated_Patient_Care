@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <a href="{{ url_for('reports.patient_search') }}" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left me-1"></i> Back to Search
+    </a>
+    <button onclick="window.print()" class="btn btn-success fw-semibold">
+      <i class="bi bi-printer me-1"></i> Download / Print Medical Report
+    </button>
+  </div>
+
+  <!-- Comprehensive Printable Medical Report Paper Card -->
+  <div class="card border-0 shadow-lg rounded-3 p-4 p-md-5 bg-white" id="printableReport">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center border-bottom pb-4 mb-4">
+      <div>
+        <h2 class="fw-bold text-primary mb-1"><i class="bi bi-hospital me-2"></i>IPCMS Comprehensive Medical Report</h2>
+        <p class="text-muted small mb-0">Integrated Patient Care Management System | Clinical Health Records</p>
+      </div>
+      <div class="text-end">
+        <span class="badge bg-primary fs-6 px-3 py-2">Report Date: {{ today.strftime('%d-%m-%Y') }}</span>
+      </div>
+    </div>
+
+    <!-- Patient Profile Summary -->
+    <div class="card bg-light border-0 p-3 mb-4">
+      <div class="row align-items-center">
+        <div class="col-md-6 border-end">
+          <h5 class="fw-bold text-dark mb-1">{{ patient.full_name }}</h5>
+          <p class="mb-0 text-muted small">
+            <strong>Patient ID:</strong> PAT100{{ patient.id }} &nbsp;|&nbsp; 
+            <strong>Gender:</strong> {{ patient.gender }} &nbsp;|&nbsp; 
+            <strong>Age:</strong> {{ patient.age }} Years
+          </p>
+        </div>
+        <div class="col-md-6 ps-md-4 mt-2 mt-md-0">
+          <p class="mb-0 text-muted small">
+            <strong>Blood Group:</strong> <span class="badge bg-danger">{{ patient.blood_group }}</span> &nbsp;|&nbsp; 
+            <strong>Phone:</strong> {{ patient.phone_number }}<br>
+            <strong>Address:</strong> {{ patient.address }}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1. Consultation & Diagnosis History -->
+    <div class="mb-4">
+      <h5 class="fw-bold text-primary border-bottom pb-2 mb-3"><i class="bi bi-stethoscope me-2"></i>Consultation & Diagnosis History</h5>
+      <table class="table table-bordered align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Date</th>
+            <th>Doctor</th>
+            <th>Symptoms</th>
+            <th>Diagnosis</th>
+            <th>Treatment Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in consultations %}
+            <tr>
+              <td>{{ c.consultation_date.strftime('%d-%m-%Y') }}</td>
+              <td>Dr. {{ c.doctor.first_name }} {{ c.doctor.last_name }}</td>
+              <td>{{ c.symptoms }}</td>
+              <td class="fw-bold text-primary">{{ c.diagnosis }}</td>
+              <td>{{ c.treatment_notes }}</td>
+            </tr>
+          {% else %}
+            <tr><td colspan="5" class="text-center text-muted">No consultations logged.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 2. Prescription History -->
+    <div class="mb-4">
+      <h5 class="fw-bold text-success border-bottom pb-2 mb-3"><i class="bi bi-capsule me-2"></i>Digital Prescriptions</h5>
+      <table class="table table-bordered align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Rx ID</th>
+            <th>Date</th>
+            <th>Doctor</th>
+            <th>Prescribed Medicines</th>
+            <th>Special Instructions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in prescriptions %}
+            <tr>
+              <td class="fw-bold">Rx #{{"%05d" | format(p.id)}}</td>
+              <td>{{ p.prescription_date.strftime('%d-%m-%Y') }}</td>
+              <td>Dr. {{ p.doctor.last_name }}</td>
+              <td>
+                {% for item in p.items %}
+                  <div>• <strong>{{ item.medicine_name }}</strong> - {{ item.dosage }} ({{ item.frequency }}, {{ item.duration }})</div>
+                {% endfor %}
+              </td>
+              <td>{{ p.special_instructions or '-' }}</td>
+            </tr>
+          {% else %}
+            <tr><td colspan="5" class="text-center text-muted">No prescriptions logged.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 3. Laboratory Test Reports -->
+    <div class="mb-4">
+      <h5 class="fw-bold text-teal border-bottom pb-2 mb-3"><i class="bi bi-flask me-2"></i>Laboratory Diagnostic Reports</h5>
+      <table class="table table-bordered align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Test Date</th>
+            <th>Test Name</th>
+            <th>Result</th>
+            <th>Remarks</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for l in lab_reports %}
+            <tr>
+              <td>{{ l.test_date.strftime('%d-%m-%Y') }}</td>
+              <td class="fw-bold">{{ l.test_name }}</td>
+              <td>
+                {% if l.result == 'Normal' %}
+                  <span class="badge bg-success">Normal</span>
+                {% elif l.result == 'Borderline' %}
+                  <span class="badge bg-warning text-dark">Borderline</span>
+                {% else %}
+                  <span class="badge bg-danger">{{ l.result }}</span>
+                {% endif %}
+              </td>
+              <td>{{ l.remarks or '-' }}</td>
+            </tr>
+          {% else %}
+            <tr><td colspan="4" class="text-center text-muted">No laboratory reports recorded.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Sign-off Footer -->
+    <div class="d-flex justify-content-between align-items-end pt-4 mt-5 border-top">
+      <div>
+        <p class="text-muted small mb-0"><i class="bi bi-shield-lock-fill me-1 text-success"></i>Official IPCMS Medical Summary Document</p>
+      </div>
+      <div class="text-end">
+        <div class="border-bottom border-dark pb-1 mb-1 d-inline-block px-4">
+          <span class="fw-bold text-dark">Chief Medical Officer</span>
+        </div>
+        <p class="small text-muted mb-0">Authorized Signature</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

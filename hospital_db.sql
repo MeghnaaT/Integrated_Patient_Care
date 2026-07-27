@@ -136,7 +136,7 @@ CREATE TABLE IF NOT EXISTS appointments (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ----------------------------------------------------------------------------
--- 8. Table: medical_records
+-- 8. Table: medical_records / consultations
 -- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS medical_records (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -158,6 +158,149 @@ CREATE TABLE IF NOT EXISTS medical_records (
         ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- ----------------------------------------------------------------------------
+-- 9. Table: ehr_details (Patient Health Vitals & Summary)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS ehr_details (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    patient_id INT NOT NULL UNIQUE,
+    height INT NULL,
+    weight INT NULL,
+    bmi DECIMAL(4,1) NULL,
+    smoking_status VARCHAR(50) NULL DEFAULT 'No',
+    alcohol_status VARCHAR(50) NULL DEFAULT 'No',
+    chronic_diseases VARCHAR(255) NULL DEFAULT 'No',
+    remarks TEXT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_ehr_patient_id FOREIGN KEY (patient_id)
+        REFERENCES patients(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- 10. Table: allergies
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS allergies (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    patient_id INT NOT NULL,
+    allergen VARCHAR(100) NOT NULL,
+    reaction VARCHAR(255) NOT NULL,
+    added_on DATE NOT NULL,
+
+    CONSTRAINT fk_allergies_patient_id FOREIGN KEY (patient_id)
+        REFERENCES patients(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- 11. Table: patient_medications (Active Medications)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS patient_medications (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    patient_id INT NOT NULL,
+    medicine VARCHAR(150) NOT NULL,
+    dosage VARCHAR(100) NOT NULL,
+    frequency VARCHAR(100) NOT NULL,
+    start_date DATE NOT NULL,
+
+    CONSTRAINT fk_patient_meds_patient_id FOREIGN KEY (patient_id)
+        REFERENCES patients(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- 12. Table: consultations
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS consultations (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    patient_id INT NOT NULL,
+    doctor_id INT NOT NULL,
+    consultation_date DATE NOT NULL,
+    symptoms TEXT NOT NULL,
+    diagnosis TEXT NOT NULL,
+    treatment_notes TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_consultations_patient_id FOREIGN KEY (patient_id)
+        REFERENCES patients(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+    CONSTRAINT fk_consultations_doctor_id FOREIGN KEY (doctor_id)
+        REFERENCES doctors(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- 13. Table: prescriptions
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS prescriptions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    patient_id INT NOT NULL,
+    doctor_id INT NOT NULL,
+    consultation_id INT NULL,
+    prescription_date DATE NOT NULL,
+    special_instructions TEXT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_prescriptions_patient_id FOREIGN KEY (patient_id)
+        REFERENCES patients(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+    CONSTRAINT fk_prescriptions_doctor_id FOREIGN KEY (doctor_id)
+        REFERENCES doctors(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+    CONSTRAINT fk_prescriptions_consultation_id FOREIGN KEY (consultation_id)
+        REFERENCES consultations(id)
+        ON DELETE SET NULL
+        ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- 14. Table: prescription_items
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS prescription_items (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    prescription_id INT NOT NULL,
+    medicine_name VARCHAR(150) NOT NULL,
+    dosage VARCHAR(100) NOT NULL,
+    frequency VARCHAR(100) NOT NULL,
+    duration VARCHAR(100) NOT NULL,
+
+    CONSTRAINT fk_prescription_items_prescription_id FOREIGN KEY (prescription_id)
+        REFERENCES prescriptions(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ----------------------------------------------------------------------------
+-- 15. Table: lab_reports
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS lab_reports (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    patient_id INT NOT NULL,
+    doctor_id INT NOT NULL,
+    test_name VARCHAR(150) NOT NULL,
+    test_date DATE NOT NULL,
+    result VARCHAR(255) NOT NULL,
+    remarks TEXT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_lab_reports_patient_id FOREIGN KEY (patient_id)
+        REFERENCES patients(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+    CONSTRAINT fk_lab_reports_doctor_id FOREIGN KEY (doctor_id)
+        REFERENCES doctors(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- ============================================================================
 -- INDEXES FOR QUERY OPTIMIZATION
 -- ============================================================================
@@ -170,13 +313,16 @@ CREATE INDEX idx_patients_phone ON patients(phone_number);
 CREATE INDEX idx_doctors_department ON doctors(department_id);
 CREATE INDEX idx_doctors_specialization ON doctors(specialization);
 
--- Speed up schedule lookups for appointments (common query is checking slot availability on a day)
+-- Speed up schedule lookups for appointments
 CREATE INDEX idx_appointments_date_time ON appointments(appointment_date, appointment_time);
 CREATE INDEX idx_appointments_patient ON appointments(patient_id);
 CREATE INDEX idx_appointments_doctor ON appointments(doctor_id);
 
--- Speed up medical record access by patient and date
+-- Speed up medical record & consultation access
 CREATE INDEX idx_records_patient_date ON medical_records(patient_id, visit_date);
+CREATE INDEX idx_consultations_patient ON consultations(patient_id);
+CREATE INDEX idx_prescriptions_patient ON prescriptions(patient_id);
+CREATE INDEX idx_lab_reports_patient ON lab_reports(patient_id);
 
 -- ============================================================================
 -- INITIAL SAMPLE DATA INSERTION (SEED DATA)
@@ -197,7 +343,7 @@ INSERT INTO departments (id, name, description) VALUES
 (4, 'Pediatrics', 'Infant, child, and adolescent medical care'),
 (5, 'General Medicine', 'Common illnesses, health screenings, and primary medical support');
 
--- 3. Seed Users (Passwords hashed using Werkzeug scrypt format for 'admin123', 'doctor123', 'nurse123', 'patient123')
+-- 3. Seed Users
 INSERT INTO users (id, username, email, password_hash, role_id, is_active) VALUES
 (1, 'admin_user', 'admin@ipcms.com', 'scrypt:32768:8:1$uPlxR2p7zE2cQkK8$b671a539b5b2e59df9547d2f9547cb029a8a65f9bf72382103f6fdf6708b7672bc19ca7892b1a82ef2f05c3d2568e61fb19c961e6ca3a07865e90df3a1b1836c', 1, TRUE),
 (2, 'doctor_user', 'doctor@ipcms.com', 'scrypt:32768:8:1$hU8uO3f7aE2bQkM9$a187a539b5b2e59df9547d2f9547cb029a8a65f9bf72382103f6fdf6708b7672bc19ca7892b1a82ef2f05c3d2568e61fb19c961e6ca3a07865e90df3a1b1842d', 2, TRUE),
@@ -212,14 +358,40 @@ INSERT INTO doctors (id, first_name, last_name, specialization, qualification, d
 INSERT INTO nurses (id, first_name, last_name, department_id, contact_number) VALUES
 (3, 'Sarah', 'Connor', 5, '9876543212');
 
--- 6. Seed Patients
+-- 6. Seed Patients (Rahul Kumar matching Slide 6)
 INSERT INTO patients (id, first_name, last_name, age, gender, blood_group, phone_number, email, address, medical_history, registered_on) VALUES
-(4, 'Ravi', 'Kumar', 32, 'Male', 'O+', '9876543210', 'patient@ipcms.com', '123, MG Road, Bangalore, Karnataka', 'No known allergies', '2024-05-10');
+(4, 'Rahul', 'Kumar', 28, 'Male', 'O+', '9876543210', 'patient@ipcms.com', '123, Green Street, Chennai - 600001', 'No known allergies', '2024-01-10');
 
--- 7. Seed Appointments
-INSERT INTO appointments (id, patient_id, doctor_id, appointment_date, appointment_time, status) VALUES
-(1, 4, 2, '2026-07-15', '10:30:00', 'Confirmed');
+-- 7. Seed EHR Details (Matching Slide 6 Mockup)
+INSERT INTO ehr_details (id, patient_id, height, weight, bmi, smoking_status, alcohol_status, chronic_diseases, remarks) VALUES
+(1, 4, 175, 72, 23.5, 'No', 'Occasional', 'No', 'Patient is healthy.');
 
--- 8. Seed Medical Records
-INSERT INTO medical_records (id, patient_id, doctor_id, visit_date, symptoms, diagnosis, treatment_plan) VALUES
-(1, 4, 2, '2026-07-01', 'Mild chest discomfort and fatigue', 'Normal sinus rhythm, fatigue due to workload stress', 'Rest, low-sodium diet, check back if symptoms persist');
+-- 8. Seed Allergies
+INSERT INTO allergies (id, patient_id, allergen, reaction, added_on) VALUES
+(1, 4, 'Penicillin', 'Rash', '2024-01-10');
+
+-- 9. Seed Current Medications
+INSERT INTO patient_medications (id, patient_id, medicine, dosage, frequency, start_date) VALUES
+(1, 4, 'Paracetamol', '500 mg', 'Twice a day', '2024-05-15'),
+(2, 4, 'Vitamin D3', '60,000 IU', 'Once a week', '2024-05-15');
+
+-- 10. Seed Consultations
+INSERT INTO consultations (id, patient_id, doctor_id, consultation_date, symptoms, diagnosis, treatment_notes) VALUES
+(1, 4, 2, '2024-05-20', 'Fever, Cough, Headache and Body Pain', 'Viral Fever', 'Paracetamol 500 mg - Twice a day. Drink plenty of water and take rest.'),
+(2, 4, 2, '2024-02-10', 'Acidity and stomach fullness', 'Acidity', 'Avoid spicy food, take antacids after meals.'),
+(3, 4, 2, '2023-12-05', 'High temperature and chills', 'Fever', 'Recovered after medication.');
+
+-- 11. Seed Prescriptions & Items
+INSERT INTO prescriptions (id, patient_id, doctor_id, consultation_id, prescription_date, special_instructions) VALUES
+(1, 4, 2, 1, '2024-05-20', 'Drink plenty of water and take rest.');
+
+INSERT INTO prescription_items (id, prescription_id, medicine_name, dosage, frequency, duration) VALUES
+(1, 1, 'Paracetamol 500 mg', '500 mg', 'Twice a Day', '5 Days'),
+(2, 1, 'Cetirizine 10 mg', '10 mg', 'Once a Day', '3 Days');
+
+-- 12. Seed Lab Reports
+INSERT INTO lab_reports (id, patient_id, doctor_id, test_name, test_date, result, remarks) VALUES
+(1, 4, 2, 'Complete Blood Count', '2024-05-18', 'Normal', 'All parameters within standard limits'),
+(2, 4, 2, 'Blood Sugar (Fasting)', '2024-05-18', 'Normal', 'Fasting blood sugar 92 mg/dL'),
+(3, 4, 2, 'Lipid Profile', '2024-05-18', 'Borderline', 'Triglycerides slightly elevated');
+

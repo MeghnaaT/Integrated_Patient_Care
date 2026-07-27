@@ -7,6 +7,10 @@ from models.doctor import Doctor
 from models.nurse import Nurse
 from models.appointment import Appointment
 from models.medical_record import MedicalRecord
+from models.ehr_detail import EHRDetail, Allergy, PatientMedication
+from models.consultation import Consultation
+from models.prescription import Prescription, PrescriptionItem
+from models.lab_report import LabReport
 
 # Expose all models for migrations and dynamic loading
 __all__ = [
@@ -18,5 +22,12 @@ __all__ = [
     'Doctor',
     'Nurse',
     'Appointment',
-    'MedicalRecord'
+    'MedicalRecord',
+    'EHRDetail',
+    'Allergy',
+    'PatientMedication',
+    'Consultation',
+    'Prescription',
+    'PrescriptionItem',
+    'LabReport'
 ]

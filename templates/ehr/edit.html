@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-primary text-white py-3">
+          <h4 class="h5 fw-bold mb-0"><i class="bi bi-pencil-square me-2"></i>Edit EHR Vitals - {{ patient.full_name }}</h4>
+        </div>
+        <div class="card-body p-4">
+          <form method="POST">
+            {{ form.hidden_tag() }}
+            <div class="row g-3">
+              <div class="col-md-4">
+                {{ form.height.label(class="form-label fw-semibold") }}
+                {{ form.height(class="form-control") }}
+              </div>
+              <div class="col-md-4">
+                {{ form.weight.label(class="form-label fw-semibold") }}
+                {{ form.weight(class="form-control") }}
+              </div>
+              <div class="col-md-4">
+                {{ form.bmi.label(class="form-label fw-semibold") }}
+                {{ form.bmi(class="form-control") }}
+              </div>
+              <div class="col-md-6">
+                {{ form.smoking_status.label(class="form-label fw-semibold") }}
+                {{ form.smoking_status(class="form-select") }}
+              </div>
+              <div class="col-md-6">
+                {{ form.alcohol_status.label(class="form-label fw-semibold") }}
+                {{ form.alcohol_status(class="form-select") }}
+              </div>
+              <div class="col-12">
+                {{ form.chronic_diseases.label(class="form-label fw-semibold") }}
+                {{ form.chronic_diseases(class="form-control") }}
+              </div>
+              <div class="col-12">
+                {{ form.remarks.label(class="form-label fw-semibold") }}
+                {{ form.remarks(class="form-control") }}
+              </div>
+              <div class="col-12 mt-4 d-flex justify-content-end gap-2">
+                <a href="{{ url_for('ehr.view_ehr', patient_id=patient.id) }}" class="btn btn-light">Cancel</a>
+                {{ form.submit(class="btn btn-primary fw-semibold") }}
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

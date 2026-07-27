@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{{ url_for('dashboard.dashboard') }}">Dashboard</a></li>
+      <li class="breadcrumb-item"><a href="{{ url_for('reports.view_reports') }}">Reports</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Reports & Search</li>
+    </ol>
+  </nav>
+
+  <h2 class="h3 fw-bold text-dark mb-4">
+    <i class="bi bi-file-earmark-bar-graph text-primary me-2"></i>Reports & Search Module
+  </h2>
+
+  <!-- Patient Search Box (Matches Slide 43) -->
+  <div class="card border-0 shadow-sm rounded-3 mb-4">
+    <div class="card-header bg-white py-3 border-0">
+      <h5 class="fw-bold text-primary mb-0">Search Patient Records</h5>
+    </div>
+    <div class="card-body p-4">
+      <form method="POST" action="{{ url_for('reports.patient_search') }}" class="row g-3 align-items-center">
+        {{ form.hidden_tag() }}
+        <div class="col-md-3">
+          {{ form.search_by.label(class="form-label fw-semibold") }}
+          {{ form.search_by(class="form-select") }}
+        </div>
+        <div class="col-md-7">
+          {{ form.query.label(class="form-label fw-semibold") }}
+          {{ form.query(class="form-control", placeholder="Search by Patient ID (e.g. PAT1001) or Patient Name (e.g. Rahul Kumar)...") }}
+        </div>
+        <div class="col-md-2 mt-md-4">
+          <button type="submit" class="btn btn-primary w-100 fw-semibold py-2">
+            <i class="bi bi-search me-1"></i> Search
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Search Output Card (Matches Slide 43) -->
+  {% if query %}
+    <div class="card border-0 shadow-sm rounded-3">
+      <div class="card-header bg-white py-3 border-0">
+        <h5 class="fw-bold text-dark mb-0">Search Results</h5>
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th class="ps-4">Patient ID</th>
+              <th>Patient Name</th>
+              <th>Age / Gender</th>
+              <th>Blood Group</th>
+              <th>Contact Phone</th>
+              <th class="text-center">Medical Report</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in patients %}
+              <tr>
+                <td class="ps-4 fw-bold text-primary">PAT100{{ p.id }}</td>
+                <td class="fw-semibold text-dark">{{ p.full_name }}</td>
+                <td>{{ p.age }} Yrs / {{ p.gender }}</td>
+                <td><span class="badge bg-danger">{{ p.blood_group }}</span></td>
+                <td>{{ p.phone_number }}</td>
+                <td class="text-center">
+                  <a href="{{ url_for('reports.generate_patient_report', patient_id=p.id) }}" class="btn btn-sm btn-success fw-semibold">
+                    <i class="bi bi-file-earmark-pdf me-1"></i> Generate Report
+                  </a>
+                  <a href="{{ url_for('medical_history.view_patient_history', patient_id=p.id) }}" class="btn btn-sm btn-outline-primary ms-1">
+                    <i class="bi bi-eye me-1"></i> View Details
+                  </a>
+                </td>
+              </tr>
+            {% else %}
+              <tr><td colspan="6" class="text-center text-muted py-4">No patient found matching search query "{{ query }}".</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% else %}
+    <div class="alert alert-light border rounded-3 text-center py-4">
+      <i class="bi bi-info-circle text-primary fs-3 d-block mb-2"></i>
+      <p class="mb-0 text-muted">Enter a Patient ID (e.g. <strong>PAT1001</strong>) or Patient Name (e.g. <strong>Rahul Kumar</strong>) above to search records and generate a comprehensive medical report.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

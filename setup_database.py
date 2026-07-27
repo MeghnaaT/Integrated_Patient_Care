@@ -39,7 +39,10 @@ app.config['SECRET_KEY'] = secret_key
 from database.connection import db
 db.init_app(app)
 
-from models import User, Role, Patient, Doctor, Nurse, Department, Appointment, MedicalRecord
+from models import (
+    User, Role, Patient, Doctor, Nurse, Department, Appointment, MedicalRecord,
+    EHRDetail, Allergy, PatientMedication, Consultation, Prescription, PrescriptionItem, LabReport
+)
 
 def create_database_if_not_exists():
     """Establish a direct connection to MySQL server and ensure the target database exists."""
@@ -64,37 +67,28 @@ def create_database_if_not_exists():
 def explain_relationships():
     explanation = """
 ================================================================================
-                    DATABASE RELATIONSHIPS EXPLANATION
+                    DATABASE RELATIONSHIPS EXPLANATION (MILESTONE 2)
 ================================================================================
 1. Role <-> User (One-to-Many):
    - A single Role (e.g. 'Doctor', 'Patient') can be assigned to multiple Users.
-   - mapped via users.role_id FK pointing to roles.id.
-   - ON DELETE RESTRICT prevents deleting a role if active users still hold it.
 
 2. User <-> Patient / Doctor / Nurse (One-to-One / Shared Primary Keys):
    - Each medical staff or patient profile is linked to exactly one User credential account.
-   - patients.id, doctors.id, and nurses.id act as both Primary Keys and Foreign Keys 
-     referencing users.id.
-   - ON DELETE CASCADE propagates user deletions to the demographics profiles.
 
-3. Department <-> Doctor / Nurse (One-to-Many):
-   - Multiple doctors and nurses belong to a single department (e.g. 'Cardiology').
-   - department_id FK in doctors and nurses tables references departments.id.
-   - ON DELETE RESTRICT protects department structure deletions if personnel exist.
+3. Patient <-> EHRDetail (One-to-One):
+   - Stores vitals (height, weight, BMI), lifestyle habits, chronic diseases, and remarks.
 
-4. Patient & Doctor <-> Appointment (Many-to-One):
-   - An appointment serves as an associative entity. A patient has many appointments,
-     and a doctor has many appointments.
-   - appointments.patient_id FK references patients.id.
-   - appointments.doctor_id FK references doctors.id.
-   - ON DELETE CASCADE clears bookings if either profile is removed.
+4. Patient <-> Allergies & Active Medications (One-to-Many):
+   - Tracks allergen warnings and active prescription regimes for clinical safety.
 
-5. Patient & Doctor <-> MedicalRecord (Many-to-One):
-   - Similar to appointments, a medical record (EHR) binds a patient to the consulting
-     doctor who recorded the diagnosis.
-   - medical_records.patient_id FK references patients.id.
-   - medical_records.doctor_id FK references doctors.id.
-   - ON DELETE CASCADE removes EHR notes if profiles are deleted.
+5. Patient & Doctor <-> Consultation (Many-to-One):
+   - Binds doctor examination notes, symptoms, diagnosis, and treatment plan.
+
+6. Consultation <-> Prescription <-> PrescriptionItems (One-to-One / One-to-Many):
+   - Prescriptions link doctor recommendations to structured medication lists (dosage, frequency, duration).
+
+7. Patient & Doctor <-> LabReport (Many-to-One):
+   - Tracks requested/completed diagnostic test results (e.g. CBC, Blood Sugar, Lipid Profile).
 ================================================================================
 """
     print(explanation)
@@ -145,7 +139,6 @@ def seed_data():
     # 3. Seed Users
     u_admin = User.query.filter_by(username='admin_user').first()
     if not u_admin:
-        # Creating passwords using Werkzeug's default password hashing (scrypt method)
         user_admin = User(
             username='admin_user',
             email='admin@ipcms.com',
@@ -176,6 +169,12 @@ def seed_data():
         print("-> Users credentials accounts seeded.")
     else:
         print("-> Users already exist.")
+        # Ensure default test accounts remain active for test runs
+        for username in ['admin_user', 'doctor_user', 'nurse_user', 'patient_user']:
+            u = User.query.filter_by(username=username).first()
+            if u:
+                u.is_active = True
+        db.session.commit()
 
     # Re-fetch users to get IDs
     user_doctor_id = User.query.filter_by(username='doctor_user').first().id
@@ -218,60 +217,108 @@ def seed_data():
     else:
         print("-> Nurse profiles already exist.")
 
-    # 6. Seed Patient Demographics
+    # 6. Seed Patient Demographics (Rahul Kumar matching Slide 6)
     pat = db.session.get(Patient, user_patient_id)
     if not pat:
         patient_record = Patient(
             id=user_patient_id,
-            first_name='Ravi',
+            first_name='Rahul',
             last_name='Kumar',
-            age=32,
+            age=28,
             gender='Male',
             blood_group='O+',
             phone_number='9876543210',
             email='patient@ipcms.com',
-            address='123, MG Road, Bangalore, Karnataka',
+            address='123, Green Street, Chennai - 600001',
             medical_history='No known allergies',
-            registered_on=datetime.date(2024, 5, 10)
+            registered_on=datetime.date(2024, 1, 10)
         )
         db.session.add(patient_record)
         db.session.commit()
         print("-> Patient demographics profiles seeded.")
     else:
-        print("-> Patient profiles already exist.")
-
-    # 7. Seed Appointments
-    appt = Appointment.query.filter_by(patient_id=user_patient_id, doctor_id=user_doctor_id).first()
-    if not appt:
-        appointment_record = Appointment(
-            patient_id=user_patient_id,
-            doctor_id=user_doctor_id,
-            appointment_date=datetime.date(2026, 7, 15),
-            appointment_time=datetime.time(10, 30, 0),
-            status='Confirmed'
-        )
-        db.session.add(appointment_record)
+        # Update existing patient to Rahul Kumar for consistency with mockups
+        pat.first_name = 'Rahul'
+        pat.last_name = 'Kumar'
+        pat.age = 28
+        pat.blood_group = 'O+'
+        pat.address = '123, Green Street, Chennai - 600001'
+        pat.registered_on = datetime.date(2024, 1, 10)
         db.session.commit()
-        print("-> Appointments seeded.")
-    else:
-        print("-> Appointments already exist.")
+        print("-> Patient profile updated to match EHR mockup.")
 
-    # 8. Seed Medical Records
-    rec = MedicalRecord.query.filter_by(patient_id=user_patient_id, doctor_id=user_doctor_id).first()
-    if not rec:
-        medical_record = MedicalRecord(
+    # 7. Seed EHR Details (Vitals matching Slide 6)
+    ehr = EHRDetail.query.filter_by(patient_id=user_patient_id).first()
+    if not ehr:
+        ehr_obj = EHRDetail(
             patient_id=user_patient_id,
-            doctor_id=user_doctor_id,
-            visit_date=datetime.date(2026, 7, 1),
-            symptoms='Mild chest discomfort and fatigue',
-            diagnosis='Normal sinus rhythm, fatigue due to workload stress',
-            treatment_plan='Rest, low-sodium diet, check back if symptoms persist'
+            height=175,
+            weight=72,
+            bmi=23.5,
+            smoking_status='No',
+            alcohol_status='Occasional',
+            chronic_diseases='No',
+            remarks='Patient is healthy.'
         )
-        db.session.add(medical_record)
+        db.session.add(ehr_obj)
         db.session.commit()
-        print("-> Medical records (EHR) seeded.")
-    else:
-        print("-> Medical records already exist.")
+        print("-> EHR Details (vitals) seeded.")
+
+    # 8. Seed Allergies
+    allergy = Allergy.query.filter_by(patient_id=user_patient_id).first()
+    if not allergy:
+        all_obj = Allergy(
+            patient_id=user_patient_id,
+            allergen='Penicillin',
+            reaction='Rash',
+            added_on=datetime.date(2024, 1, 10)
+        )
+        db.session.add(all_obj)
+        db.session.commit()
+        print("-> Allergy record seeded.")
+
+    # 9. Seed Active Medications
+    med = PatientMedication.query.filter_by(patient_id=user_patient_id).first()
+    if not med:
+        m1 = PatientMedication(patient_id=user_patient_id, medicine='Paracetamol', dosage='500 mg', frequency='Twice a day', start_date=datetime.date(2024, 5, 15))
+        m2 = PatientMedication(patient_id=user_patient_id, medicine='Vitamin D3', dosage='60,000 IU', frequency='Once a week', start_date=datetime.date(2024, 5, 15))
+        db.session.add_all([m1, m2])
+        db.session.commit()
+        print("-> Active medications seeded.")
+
+    # 10. Seed Consultations
+    consult = Consultation.query.filter_by(patient_id=user_patient_id).first()
+    if not consult:
+        c1 = Consultation(patient_id=user_patient_id, doctor_id=user_doctor_id, consultation_date=datetime.date(2024, 5, 20), symptoms='Fever, Cough, Headache and Body Pain', diagnosis='Viral Fever', treatment_notes='Paracetamol 500 mg - Twice a day. Drink plenty of water and take rest.')
+        c2 = Consultation(patient_id=user_patient_id, doctor_id=user_doctor_id, consultation_date=datetime.date(2024, 2, 10), symptoms='Acidity and stomach fullness', diagnosis='Acidity', treatment_notes='Avoid spicy food, take antacids after meals.')
+        c3 = Consultation(patient_id=user_patient_id, doctor_id=user_doctor_id, consultation_date=datetime.date(2023, 12, 5), symptoms='High temperature and chills', diagnosis='Fever', treatment_notes='Recovered after medication.')
+        db.session.add_all([c1, c2, c3])
+        db.session.commit()
+        print("-> Consultations seeded.")
+
+    # 11. Seed Prescriptions & Prescription Items
+    presc = Prescription.query.filter_by(patient_id=user_patient_id).first()
+    if not presc:
+        p1 = Prescription(patient_id=user_patient_id, doctor_id=user_doctor_id, consultation_id=1, prescription_date=datetime.date(2024, 5, 20), special_instructions='Drink plenty of water and take rest.')
+        db.session.add(p1)
+        db.session.commit()
+
+        item1 = PrescriptionItem(prescription_id=p1.id, medicine_name='Paracetamol 500 mg', dosage='500 mg', frequency='Twice a Day', duration='5 Days')
+        item2 = PrescriptionItem(prescription_id=p1.id, medicine_name='Cetirizine 10 mg', dosage='10 mg', frequency='Once a Day', duration='3 Days')
+        db.session.add_all([item1, item2])
+        db.session.commit()
+        print("-> Prescriptions and items seeded.")
+
+    # 12. Seed Lab Reports
+    lab = LabReport.query.filter_by(patient_id=user_patient_id).first()
+    if not lab:
+        l1 = LabReport(patient_id=user_patient_id, doctor_id=user_doctor_id, test_name='Complete Blood Count', test_date=datetime.date(2024, 5, 18), result='Normal', remarks='All parameters within standard limits')
+        l2 = LabReport(patient_id=user_patient_id, doctor_id=user_doctor_id, test_name='Blood Sugar (Fasting)', test_date=datetime.date(2024, 5, 18), result='Normal', remarks='Fasting blood sugar 92 mg/dL')
+        l3 = LabReport(patient_id=user_patient_id, doctor_id=user_doctor_id, test_name='Lipid Profile', test_date=datetime.date(2024, 5, 18), result='Borderline', remarks='Triglycerides slightly elevated')
+        db.session.add_all([l1, l2, l3])
+        db.session.commit()
+        print("-> Lab reports seeded.")
+
 
 if __name__ == '__main__':
     explain_relationships()

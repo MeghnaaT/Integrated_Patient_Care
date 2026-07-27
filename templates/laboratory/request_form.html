@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{{ url_for('dashboard.dashboard') }}">Dashboard</a></li>
+      <li class="breadcrumb-item"><a href="{{ url_for('laboratory.list_reports') }}">Laboratory</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Add Lab Report</li>
+    </ol>
+  </nav>
+
+  <h2 class="h3 fw-bold text-dark mb-4">
+    <i class="bi bi-flask-fill text-primary me-2"></i>Laboratory Management
+  </h2>
+
+  <div class="card border-0 shadow-sm rounded-3">
+    <div class="card-header bg-white py-3 border-0 border-bottom">
+      <h5 class="fw-bold text-primary mb-0">Laboratory Test Request & Result Entry Form</h5>
+    </div>
+    <div class="card-body p-4">
+      <form method="POST">
+        {{ form.hidden_tag() }}
+        <div class="row g-3">
+          <div class="col-md-6">
+            {{ form.patient_id.label(class="form-label fw-semibold") }}
+            {{ form.patient_id(class="form-select") }}
+          </div>
+          <div class="col-md-6">
+            {{ form.doctor_id.label(class="form-label fw-semibold") }}
+            {{ form.doctor_id(class="form-select") }}
+          </div>
+
+          <div class="col-md-4">
+            {{ form.test_name.label(class="form-label fw-semibold") }}
+            {{ form.test_name(class="form-select") }}
+          </div>
+          <div class="col-md-4">
+            {{ form.test_date.label(class="form-label fw-semibold") }}
+            {{ form.test_date(class="form-control", type="date") }}
+          </div>
+          <div class="col-md-4">
+            {{ form.result.label(class="form-label fw-semibold") }}
+            {{ form.result(class="form-select") }}
+          </div>
+
+          <div class="col-12">
+            {{ form.remarks.label(class="form-label fw-semibold") }}
+            {{ form.remarks(class="form-control") }}
+          </div>
+
+          <div class="col-12 mt-4 d-flex gap-2">
+            {{ form.submit(class="btn btn-primary fw-semibold px-4") }}
+            <a href="{{ url_for('laboratory.list_reports') }}" class="btn btn-light border px-4">Cancel</a>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

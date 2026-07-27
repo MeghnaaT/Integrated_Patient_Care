@@ -1,0 +1,336 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <!-- Breadcrumb & Page Header -->
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{{ url_for('dashboard.dashboard') }}">Dashboard</a></li>
+      <li class="breadcrumb-item"><a href="#">EHR</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Patient Record</li>
+    </ol>
+  </nav>
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="h3 fw-bold text-dark mb-0">
+      <i class="bi bi-card-checklist text-primary me-2"></i>Electronic Health Record (EHR)
+    </h2>
+    <div>
+      {% if current_user.role.name in ['Admin', 'Doctor', 'Nurse'] %}
+        <a href="{{ url_for('ehr.edit_ehr', patient_id=patient.id) }}" class="btn btn-outline-primary me-2 fw-semibold">
+          <i class="bi bi-pencil-square me-1"></i> Edit Record
+        </a>
+      {% endif %}
+      <button onclick="window.print()" class="btn btn-success fw-semibold">
+        <i class="bi bi-printer me-1"></i> Print Record
+      </button>
+    </div>
+  </div>
+
+  <!-- Patient Header Info Card (Matches Slide 6) -->
+  <div class="card border-0 shadow-sm mb-4 bg-white rounded-3 overflow-hidden">
+    <div class="card-body p-4">
+      <div class="row align-items-center">
+        <div class="col-md-auto text-center mb-3 mb-md-0">
+          <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+            <i class="bi bi-person-fill fs-1"></i>
+          </div>
+        </div>
+        <div class="col-md">
+          <h3 class="h4 fw-bold text-dark mb-1">{{ patient.full_name }}</h3>
+          <div class="d-flex flex-wrap text-muted small gap-3 mb-2">
+            <span><strong>Patient ID:</strong> PAT100{{ patient.id }}</span>
+            <span>|</span>
+            <span><strong>Gender:</strong> {{ patient.gender }}</span>
+            <span>|</span>
+            <span><strong>Age:</strong> {{ patient.age }} Years</span>
+            <span>|</span>
+            <span><strong>Phone:</strong> {{ patient.phone_number }}</span>
+          </div>
+        </div>
+        <div class="col-md-4 border-start-md ps-md-4">
+          <p class="mb-1 text-muted small"><strong>Blood Group:</strong> <span class="badge bg-danger fs-6 px-2 py-1">{{ patient.blood_group }}</span></p>
+          <p class="mb-1 text-muted small"><strong>Date of Birth:</strong> 15-05-1996</p>
+          <p class="mb-0 text-muted small"><strong>Address:</strong> {{ patient.address }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EHR Content Section -->
+  <div class="row g-4">
+    <!-- Left Column: Medical Summary (Vitals) -->
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-white py-3 border-0">
+          <h5 class="fw-bold text-primary mb-0"><i class="bi bi-file-medical me-2"></i>Medical Summary</h5>
+        </div>
+        <div class="card-body p-0">
+          <table class="table table-hover align-middle mb-0">
+            <tbody>
+              <tr>
+                <th class="ps-4 text-muted fw-semibold" style="width: 40%;">Height</th>
+                <td class="fw-bold">{{ ehr.height or 175 }} cm</td>
+              </tr>
+              <tr>
+                <th class="ps-4 text-muted fw-semibold">Weight</th>
+                <td class="fw-bold">{{ ehr.weight or 72 }} kg</td>
+              </tr>
+              <tr>
+                <th class="ps-4 text-muted fw-semibold">BMI</th>
+                <td class="fw-bold"><span class="badge bg-info text-dark fs-6">{{ ehr.bmi or 23.5 }}</span></td>
+              </tr>
+              <tr>
+                <th class="ps-4 text-muted fw-semibold">Smoking</th>
+                <td>{{ ehr.smoking_status or 'No' }}</td>
+              </tr>
+              <tr>
+                <th class="ps-4 text-muted fw-semibold">Alcohol</th>
+                <td>{{ ehr.alcohol_status or 'Occasional' }}</td>
+              </tr>
+              <tr>
+                <th class="ps-4 text-muted fw-semibold">Chronic Diseases</th>
+                <td>{{ ehr.chronic_diseases or 'No' }}</td>
+              </tr>
+              <tr>
+                <th class="ps-4 text-muted fw-semibold">Remarks</th>
+                <td><span class="text-success fw-semibold">{{ ehr.remarks or 'Patient is healthy.' }}</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Allergies & Current Medications -->
+    <div class="col-lg-6">
+      <!-- Allergies Box -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+          <h5 class="fw-bold text-danger mb-0"><i class="bi bi-exclamation-triangle-fill me-2"></i>Allergies</h5>
+          {% if current_user.role.name in ['Admin', 'Doctor', 'Nurse'] %}
+            <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#addAllergyModal">
+              <i class="bi bi-plus-lg"></i> Add
+            </button>
+          {% endif %}
+        </div>
+        <div class="card-body p-0">
+          <table class="table table-sm align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th class="ps-3">Allergen</th>
+                <th>Reaction</th>
+                <th>Added On</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for allergy in allergies %}
+                <tr>
+                  <td class="ps-3 fw-bold text-danger">{{ allergy.allergen }}</td>
+                  <td>{{ allergy.reaction }}</td>
+                  <td class="text-muted small">{{ allergy.added_on.strftime('%d-%m-%Y') }}</td>
+                </tr>
+              {% else %}
+                <tr><td colspan="3" class="text-center text-muted py-3">No recorded allergies.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Current Medications Box -->
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+          <h5 class="fw-bold text-success mb-0"><i class="bi bi-capsule me-2"></i>Current Medications</h5>
+          {% if current_user.role.name in ['Admin', 'Doctor', 'Nurse'] %}
+            <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#addMedicationModal">
+              <i class="bi bi-plus-lg"></i> Add
+            </button>
+          {% endif %}
+        </div>
+        <div class="card-body p-0">
+          <table class="table table-sm align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th class="ps-3">Medicine</th>
+                <th>Dosage</th>
+                <th>Frequency</th>
+                <th>Start Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for med in medications %}
+                <tr>
+                  <td class="ps-3 fw-semibold">{{ med.medicine }}</td>
+                  <td>{{ med.dosage }}</td>
+                  <td>{{ med.frequency }}</td>
+                  <td class="text-muted small">{{ med.start_date.strftime('%d-%m-%Y') }}</td>
+                </tr>
+              {% else %}
+                <tr><td colspan="4" class="text-center text-muted py-3">No active medications recorded.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lower Section: Recent Diagnosis & Past Lab Reports (Matches Slide 6) -->
+  <div class="row g-4 mt-2">
+    <!-- Recent Diagnosis History -->
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+          <h5 class="fw-bold text-purple mb-0"><i class="bi bi-journal-medical me-2"></i>Recent Diagnosis History</h5>
+          {% if current_user.role.name in ['Admin', 'Doctor'] %}
+            <a href="{{ url_for('consultation.add_consultation', patient_id=patient.id) }}" class="btn btn-sm btn-primary">
+              <i class="bi bi-plus-lg"></i> Add Diagnosis
+            </a>
+          {% endif %}
+        </div>
+        <div class="card-body p-0">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th class="ps-3">Date</th>
+                <th>Diagnosis</th>
+                <th>Doctor</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for consult in consultations %}
+                <tr>
+                  <td class="ps-3 text-muted small">{{ consult.consultation_date.strftime('%d-%m-%Y') }}</td>
+                  <td class="fw-bold text-primary">{{ consult.diagnosis }}</td>
+                  <td>Dr. {{ consult.doctor.last_name }}</td>
+                  <td class="small text-muted">{{ consult.treatment_notes | truncate(40) }}</td>
+                </tr>
+              {% else %}
+                <tr><td colspan="4" class="text-center text-muted py-3">No diagnosis records found.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Past Lab Reports -->
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+          <h5 class="fw-bold text-teal mb-0"><i class="bi bi-file-earmark-spreadsheet me-2"></i>Past Lab Reports</h5>
+          <a href="{{ url_for('laboratory.list_reports') }}" class="btn btn-sm btn-outline-secondary">View All</a>
+        </div>
+        <div class="card-body p-0">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th class="ps-3">Test Name</th>
+                <th>Test Date</th>
+                <th>Result</th>
+                <th class="text-center">Report</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for lab in lab_reports %}
+                <tr>
+                  <td class="ps-3 fw-semibold">{{ lab.test_name }}</td>
+                  <td class="text-muted small">{{ lab.test_date.strftime('%d-%m-%Y') }}</td>
+                  <td>
+                    {% if lab.result == 'Normal' %}
+                      <span class="badge bg-success">Normal</span>
+                    {% elif lab.result == 'Borderline' %}
+                      <span class="badge bg-warning text-dark">Borderline</span>
+                    {% else %}
+                      <span class="badge bg-danger">{{ lab.result }}</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-center">
+                    <a href="{{ url_for('laboratory.view_report', id=lab.id) }}" class="btn btn-sm btn-light text-primary">
+                      <i class="bi bi-eye"></i>
+                    </a>
+                  </td>
+                </tr>
+              {% else %}
+                <tr><td colspan="4" class="text-center text-muted py-3">No lab reports found.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Add Allergy -->
+<div class="modal fade" id="addAllergyModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('ehr.add_allergy_route', patient_id=patient.id) }}">
+        {{ allergy_form.hidden_tag() }}
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold text-danger"><i class="bi bi-exclamation-triangle me-2"></i>Add Allergy</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            {{ allergy_form.allergen.label(class="form-label fw-semibold") }}
+            {{ allergy_form.allergen(class="form-control") }}
+          </div>
+          <div class="mb-3">
+            {{ allergy_form.reaction.label(class="form-label fw-semibold") }}
+            {{ allergy_form.reaction(class="form-control") }}
+          </div>
+          <div class="mb-3">
+            {{ allergy_form.added_on.label(class="form-label fw-semibold") }}
+            {{ allergy_form.added_on(class="form-control", type="date") }}
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+          {{ allergy_form.submit(class="btn btn-danger") }}
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Add Medication -->
+<div class="modal fade" id="addMedicationModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('ehr.add_medication_route', patient_id=patient.id) }}">
+        {{ med_form.hidden_tag() }}
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold text-success"><i class="bi bi-capsule me-2"></i>Add Medication</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            {{ med_form.medicine.label(class="form-label fw-semibold") }}
+            {{ med_form.medicine(class="form-control") }}
+          </div>
+          <div class="mb-3">
+            {{ med_form.dosage.label(class="form-label fw-semibold") }}
+            {{ med_form.dosage(class="form-control") }}
+          </div>
+          <div class="mb-3">
+            {{ med_form.frequency.label(class="form-label fw-semibold") }}
+            {{ med_form.frequency(class="form-control") }}
+          </div>
+          <div class="mb-3">
+            {{ med_form.start_date.label(class="form-label fw-semibold") }}
+            {{ med_form.start_date(class="form-control", type="date") }}
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+          {{ med_form.submit(class="btn btn-success") }}
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

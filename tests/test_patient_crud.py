@@ -28,6 +28,11 @@ class TestPatientCRUD(unittest.TestCase):
             db.session.commit()
 
     def tearDown(self):
+        from models.user import User
+        u = User.query.get(4)
+        if u:
+            u.is_active = True
+            db.session.commit()
         db.session.rollback()
         self.app_context.pop()
 
@@ -49,11 +54,11 @@ class TestPatientCRUD(unittest.TestCase):
         self.assertIn(b'Admin Dashboard', res.data)
         print("OK: Successfully logged in as Admin.")
 
-        # 2. Check Patient List works and contains seeded patient Ravi Kumar
+        # 2. Check Patient List works and contains seeded patient Rahul Kumar
         res = self.client.get('/patient/list')
         self.assertEqual(res.status_code, 200)
-        self.assertIn(b'Ravi Kumar', res.data)
-        print("OK: Patient Directory loaded and contains Ravi Kumar.")
+        self.assertIn(b'Rahul Kumar', res.data)
+        print("OK: Patient Directory loaded and contains Rahul Kumar.")
 
         # 3. Verify duplicate email validation works
         res = self.client.post('/patient/add', data={
@@ -98,7 +103,7 @@ class TestPatientCRUD(unittest.TestCase):
         # 6. Verify Search works
         res = self.client.get('/patient/list?q=Ramesh')
         self.assertIn(b'Ramesh Sinha', res.data)
-        self.assertNotIn(b'Ravi Kumar', res.data)
+        self.assertNotIn(b'Rahul Kumar', res.data)
         print("OK: Search functionality filters correct patients.")
 
         # 7. Edit Patient Ramesh Sinha
@@ -167,7 +172,7 @@ class TestPatientCRUD(unittest.TestCase):
         self.assertEqual(res.status_code, 403)
         print("OK: Verified Doctor permissions (View allowed, CRUD forbidden).")
 
-        # 2. Patient role permissions (Ravi Kumar has ID 4)
+        # 2. Patient role permissions (Rahul Kumar has ID 4)
         self.logout()
         res = self.login('patient@ipcms.com', 'patient123')
         self.assertIn(b'My Dashboard', res.data)

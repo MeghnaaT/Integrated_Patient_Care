@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <a href="{{ url_for('prescription.list_prescriptions') }}" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left me-1"></i> Back to Prescriptions
+    </a>
+    <button onclick="window.print()" class="btn btn-success fw-semibold">
+      <i class="bi bi-printer me-1"></i> Download / Print Digital Prescription
+    </button>
+  </div>
+
+  <!-- Digital Prescription Paper Card -->
+  <div class="card border-0 shadow-lg rounded-3 bg-white p-4 p-md-5" id="printablePrescription">
+    <!-- Hospital Branding Header -->
+    <div class="d-flex justify-content-between align-items-center border-bottom pb-4 mb-4">
+      <div>
+        <h3 class="fw-bold text-primary mb-1"><i class="bi bi-hospital me-2"></i>IPCMS Medical Center</h3>
+        <p class="text-muted small mb-0">Integrated Patient Care Management System | Clinical Care Division</p>
+      </div>
+      <div class="text-end">
+        <span class="badge bg-primary fs-6 px-3 py-2">Rx #{{"%05d" | format(prescription.id)}}</span>
+        <p class="text-muted small mb-0 mt-1">Date: <strong>{{ prescription.prescription_date.strftime('%d-%m-%Y') }}</strong></p>
+      </div>
+    </div>
+
+    <!-- Patient & Doctor Info -->
+    <div class="row mb-4">
+      <div class="col-md-6 border-end">
+        <h6 class="text-uppercase text-muted small fw-bold mb-2">Patient Details</h6>
+        <h5 class="fw-bold text-dark mb-1">{{ prescription.patient.full_name }}</h5>
+        <p class="mb-1 text-muted small"><strong>ID:</strong> PAT100{{ prescription.patient.id }} | <strong>Age/Gender:</strong> {{ prescription.patient.age }} Yrs / {{ prescription.patient.gender }}</p>
+        <p class="mb-0 text-muted small"><strong>Contact:</strong> {{ prescription.patient.phone_number }}</p>
+      </div>
+      <div class="col-md-6 ps-md-4 mt-3 mt-md-0">
+        <h6 class="text-uppercase text-muted small fw-bold mb-2">Prescribing Doctor</h6>
+        <h5 class="fw-bold text-primary mb-1">Dr. {{ prescription.doctor.first_name }} {{ prescription.doctor.last_name }}</h5>
+        <p class="mb-1 text-muted small"><strong>Specialization:</strong> {{ prescription.doctor.specialization }} ({{ prescription.doctor.qualification }})</p>
+        <p class="mb-0 text-muted small"><strong>Contact:</strong> {{ prescription.doctor.contact_number }}</p>
+      </div>
+    </div>
+
+    <!-- Rx Symbol & Medicines Table -->
+    <div class="mb-4">
+      <div class="display-6 fw-bold text-primary mb-3">Rx</div>
+      <div class="table-responsive">
+        <table class="table table-bordered align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>#</th>
+              <th>Medicine Name</th>
+              <th>Dosage</th>
+              <th>Frequency</th>
+              <th>Duration</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in prescription.items %}
+              <tr>
+                <td class="fw-bold">{{ loop.index }}</td>
+                <td class="fw-bold text-dark">{{ item.medicine_name }}</td>
+                <td>{{ item.dosage }}</td>
+                <td><span class="badge bg-info text-dark">{{ item.frequency }}</span></td>
+                <td>{{ item.duration }}</td>
+              </tr>
+            {% else %}
+              <tr><td colspan="5" class="text-center text-muted">No medicine items recorded.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Special Instructions & Footer Signature -->
+    {% if prescription.special_instructions %}
+      <div class="alert alert-light border border-info rounded-3 p-3 mb-4">
+        <h6 class="fw-bold text-info mb-1"><i class="bi bi-info-circle me-1"></i>Special Instructions:</h6>
+        <p class="mb-0 text-dark small">{{ prescription.special_instructions }}</p>
+      </div>
+    {% endif %}
+
+    <div class="row align-items-end mt-5 pt-3 border-top">
+      <div class="col-md-8 text-muted small">
+        <p class="mb-1"><i class="bi bi-shield-check me-1 text-success"></i>This is a digitally generated prescription. Valid across all certified pharmacies.</p>
+        <p class="mb-0">Generated on {{ prescription.created_at.strftime('%d-%m-%Y %I:%M %p') }}</p>
+      </div>
+      <div class="col-md-4 text-end">
+        <div class="border-bottom border-dark pb-1 mb-1 d-inline-block px-4">
+          <span class="fst-italic text-primary fw-bold">Dr. {{ prescription.doctor.last_name }}</span>
+        </div>
+        <p class="small text-muted mb-0">Doctor's Signature</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

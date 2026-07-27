@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="h3 fw-bold text-dark mb-0">
+      <i class="bi bi-flask-fill text-primary me-2"></i>Laboratory Management
+    </h2>
+    {% if current_user.role.name in ['Admin', 'Doctor', 'Nurse'] %}
+      <a href="{{ url_for('laboratory.request_lab_report') }}" class="btn btn-primary fw-semibold">
+        <i class="bi bi-plus-lg me-1"></i> Add Lab Report
+      </a>
+    {% endif %}
+  </div>
+
+  <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+    <div class="card-body p-0">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th class="ps-4">Date</th>
+            <th>Patient Name</th>
+            <th>Test Name</th>
+            <th>Doctor</th>
+            <th>Result</th>
+            <th class="text-center">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for report in reports %}
+            <tr>
+              <td class="ps-4 text-muted small">{{ report.test_date.strftime('%d-%m-%Y') }}</td>
+              <td class="fw-semibold">{{ report.patient.full_name }}</td>
+              <td class="fw-bold text-dark">{{ report.test_name }}</td>
+              <td>Dr. {{ report.doctor.first_name }} {{ report.doctor.last_name }}</td>
+              <td>
+                {% if report.result == 'Normal' %}
+                  <span class="badge bg-success">Normal</span>
+                {% elif report.result == 'Borderline' %}
+                  <span class="badge bg-warning text-dark">Borderline</span>
+                {% else %}
+                  <span class="badge bg-danger">{{ report.result }}</span>
+                {% endif %}
+              </td>
+              <td class="text-center">
+                <a href="{{ url_for('laboratory.view_report', id=report.id) }}" class="btn btn-sm btn-outline-primary">
+                  <i class="bi bi-eye me-1"></i> View Report
+                </a>
+              </td>
+            </tr>
+          {% else %}
+            <tr><td colspan="6" class="text-center text-muted py-4">No lab reports recorded.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
