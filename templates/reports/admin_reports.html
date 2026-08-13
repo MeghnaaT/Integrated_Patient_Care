@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+
+  <!-- Header -->
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h2 class="fw-bold mb-0 text-dark"><i class="bi bi-file-earmark-bar-graph me-2 text-primary"></i>Administrative Reporting</h2>
+      <p class="text-muted mb-0">Generate, filter, print, and export comprehensive hospital reports across all 12 modules</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('reports.export_csv', report_type=report_type, start_date=start_date, end_date=end_date) }}" class="btn btn-outline-success rounded-pill px-3">
+        <i class="bi bi-filetype-csv me-1"></i>Export CSV
+      </a>
+      <a href="{{ url_for('reports.export_excel', report_type=report_type, start_date=start_date, end_date=end_date) }}" class="btn btn-outline-primary rounded-pill px-3">
+        <i class="bi bi-file-earmark-excel me-1"></i>Export Excel
+      </a>
+      <a href="{{ url_for('reports.export_pdf', report_type=report_type) }}" target="_blank" class="btn btn-primary rounded-pill px-4">
+        <i class="bi bi-printer me-1"></i>Print / Save PDF
+      </a>
+    </div>
+  </div>
+
+  <!-- 12 Report Type Selector Pills (Matches Slide 7 & Slide 28) -->
+  <div class="card border-0 shadow-sm p-3 mb-4">
+    <div class="d-flex gap-2 overflow-auto py-1">
+      <a href="{{ url_for('reports.admin_reports_hub', report_type='patient') }}" class="btn btn-sm rounded-pill fw-bold {% if report_type == 'patient' %}btn-primary{% else %}btn-light text-dark border{% endif %}">1. Patient</a>
+      <a href="{{ url_for('reports.admin_reports_hub', report_type='appointment') }}" class="btn btn-sm rounded-pill fw-bold {% if report_type == 'appointment' %}btn-primary{% else %}btn-light text-dark border{% endif %}">2. Appointment</a>
+      <a href="{{ url_for('reports.admin_reports_hub', report_type='consultation') }}" class="btn btn-sm rounded-pill fw-bold {% if report_type == 'consultation' %}btn-primary{% else %}btn-light text-dark border{% endif %}">3. Consultation</a>
+      <a href="{{ url_for('reports.admin_reports_hub', report_type='prescription') }}" class="btn btn-sm rounded-pill fw-bold {% if report_type == 'prescription' %}btn-primary{% else %}btn-light text-dark border{% endif %}">4. Prescription</a>
+      <a href="{{ url_for('reports.admin_reports_hub', report_type='doctor_performance') }}" class="btn btn-sm rounded-pill fw-bold {% if report_type == 'doctor_performance' %}btn-primary{% else %}btn-light text-dark border{% endif %}">5. Doctor Performance</a>
+      <a href="{{ url_for('reports.admin_reports_hub', report_type='department') }}" class="btn btn-sm rounded-pill fw-bold {% if report_type == 'department' %}btn-primary{% else %}btn-light text-dark border{% endif %}">6. Department</a>
+      <a href="{{ url_for('reports.admin_reports_hub', report_type='monthly') }}" class="btn btn-sm rounded-pill fw-bold {% if report_type == 'monthly' %}btn-primary{% else %}btn-light text-dark border{% endif %}">7. Monthly Hospital</a>
+      <a href="{{ url_for('reports.admin_reports_hub', report_type='billing') }}" class="btn btn-sm rounded-pill fw-bold {% if report_type == 'billing' %}btn-primary{% else %}btn-light text-dark border{% endif %}">8. Billing & Revenue</a>
+      <a href="{{ url_for('reports.admin_reports_hub', report_type='laboratory') }}" class="btn btn-sm rounded-pill fw-bold {% if report_type == 'laboratory' %}btn-primary{% else %}btn-light text-dark border{% endif %}">9. Laboratory</a>
+      <a href="{{ url_for('reports.admin_reports_hub', report_type='pharmacy') }}" class="btn btn-sm rounded-pill fw-bold {% if report_type == 'pharmacy' %}btn-primary{% else %}btn-light text-dark border{% endif %}">10. Pharmacy</a>
+      <a href="{{ url_for('reports.admin_reports_hub', report_type='notification') }}" class="btn btn-sm rounded-pill fw-bold {% if report_type == 'notification' %}btn-primary{% else %}btn-light text-dark border{% endif %}">11. Notification</a>
+      <a href="{{ url_for('reports.admin_reports_hub', report_type='satisfaction') }}" class="btn btn-sm rounded-pill fw-bold {% if report_type == 'satisfaction' %}btn-primary{% else %}btn-light text-dark border{% endif %}">12. Satisfaction</a>
+    </div>
+  </div>
+
+  <!-- Filters & Search Form Card -->
+  <div class="card border-0 shadow-sm p-4 mb-4">
+    <form method="GET" action="{{ url_for('reports.admin_reports_hub') }}" class="row g-3 align-items-end">
+      <input type="hidden" name="report_type" value="{{ report_type }}">
+
+      <div class="col-md-2">
+        <label class="form-label fw-bold fs-7">Start Date</label>
+        <input type="date" name="start_date" class="form-control" value="{{ start_date }}">
+      </div>
+
+      <div class="col-md-2">
+        <label class="form-label fw-bold fs-7">End Date</label>
+        <input type="date" name="end_date" class="form-control" value="{{ end_date }}">
+      </div>
+
+      <div class="col-md-3">
+        <label class="form-label fw-bold fs-7">Filter Doctor</label>
+        <select name="doctor_id" class="form-select">
+          <option value="">-- All Doctors --</option>
+          {% for d in doctors %}
+            <option value="{{ d.id }}" {% if doctor_id == d.id %}selected{% endif %}>Dr. {{ d.first_name }} {{ d.last_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-md-3">
+        <label class="form-label fw-bold fs-7">Search Keyword</label>
+        <input type="text" name="q" class="form-control" placeholder="Search patient, diagnosis..." value="{{ search_query }}">
+      </div>
+
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-primary w-100 fw-bold"><i class="bi bi-funnel me-1"></i>Apply Filters</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Summary Statistics Cards Row -->
+  <div class="row g-3 mb-4">
+    {% for key, val in report_data.summary_stats.items() %}
+    <div class="col">
+      <div class="card border-0 shadow-sm text-center py-3 border-start border-4 border-primary">
+        <div class="card-body p-2">
+          <h4 class="fw-bold mb-0 text-dark">{{ val }}</h4>
+          <p class="text-muted small mb-0 uppercase fs-8 mt-1">{{ key.replace('_', ' ').title() }}</p>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Report Data Table Card -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+      <h5 class="fw-bold mb-0 text-dark">{{ report_title }}</h5>
+      <span class="badge bg-light text-dark border fs-7">Total Records: {{ report_data.total_items }}</span>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0 fs-7">
+        <thead class="bg-light text-muted uppercase">
+          <tr>
+            {% if report_data.rows %}
+              {% for k in report_data.rows[0] %}
+                <th>{{ k.replace('_', ' ').title() }}</th>
+              {% endfor %}
+            {% else %}
+              <th>No Records Found</th>
+            {% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in report_data.rows %}
+          <tr>
+            {% for k, v in item.items() %}
+              <td class="{% if loop.first %}fw-bold text-primary{% endif %}">{{ v }}</td>
+            {% endfor %}
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="10" class="text-center text-muted py-4">No report records found for the selected filter criteria.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Controls -->
+    {% if report_data.total_pages > 1 %}
+    <div class="card-footer bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+      <span class="text-muted fs-7">Page {{ report_data.page }} of {{ report_data.total_pages }}</span>
+      <nav>
+        <ul class="pagination pagination-sm mb-0">
+          {% if report_data.page > 1 %}
+          <li class="page-item">
+            <a class="page-link" href="{{ url_for('reports.admin_reports_hub', report_type=report_type, page=report_data.page-1, start_date=start_date, end_date=end_date) }}">Previous</a>
+          </li>
+          {% endif %}
+          {% if report_data.page < report_data.total_pages %}
+          <li class="page-item">
+            <a class="page-link" href="{{ url_for('reports.admin_reports_hub', report_type=report_type, page=report_data.page+1, start_date=start_date, end_date=end_date) }}">Next</a>
+          </li>
+          {% endif %}
+        </ul>
+      </nav>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

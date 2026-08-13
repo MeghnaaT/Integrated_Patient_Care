@@ -1,23 +1,22 @@
 # =============================================================================
-# routes/reports.py — Reports Blueprint
+# routes/reports.py — Administrative Reports & Export Blueprint
 # =============================================================================
 # URL prefix: /reports
 # =============================================================================
 
 import datetime
-from functools import wraps
-from flask import Blueprint, render_template, request, redirect, url_for, abort
+from flask import Blueprint, render_template, request, redirect, url_for, abort, Response, flash
 from flask_login import login_required, current_user
+from utils.decorators import role_required
 
 from database.connection import db
 from models.appointment import Appointment
 from models.patient import Patient
+from models.doctor import Doctor
+from models.department import Department
+from services.report_export_service import fetch_report_data, generate_report_csv
 
 reports_bp = Blueprint('reports', __name__)
-
-
-from utils.decorators import role_required
-
 
 @reports_bp.route('/', methods=['GET'])
 @login_required
@@ -26,12 +25,10 @@ def view_reports():
     """Generates monthly reports split into weekly slots matching mockups."""
     today = datetime.date.today()
     
-    # Read selection inputs from query parameters
     report_type = request.args.get('report_type', '')
     selected_month = request.args.get('month', today.month, type=int)
     selected_year = request.args.get('year', today.year, type=int)
 
-    # Static data lists for dropdown builders
     months_list = [
         (1, "January"), (2, "February"), (3, "March"), (4, "April"),
         (5, "May"), (6, "June"), (7, "July"), (8, "August"),
@@ -45,15 +42,12 @@ def view_reports():
 
     if report_type:
         show_results = True
-        
-        # Calculate date boundaries for the selected month/year
         start_date = datetime.date(selected_year, selected_month, 1)
         if selected_month == 12:
             end_date = datetime.date(selected_year + 1, 1, 1) - datetime.timedelta(days=1)
         else:
             end_date = datetime.date(selected_year, selected_month + 1, 1) - datetime.timedelta(days=1)
 
-        # 4 weeks grouping ranges
         weeks = [
             {"start": 1, "end": 7},
             {"start": 8, "end": 14},
@@ -62,7 +56,6 @@ def view_reports():
         ]
 
         if report_type == 'Monthly Appointment Report':
-            # Fetch all appointments in range
             appointments = (
                 Appointment.query
                 .filter(Appointment.appointment_date >= start_date, Appointment.appointment_date <= end_date)
@@ -80,7 +73,6 @@ def view_reports():
                 total_count += count
 
         elif report_type == 'Patient Registration Report':
-            # Fetch all patients registered in range
             patients = (
                 Patient.query
                 .filter(Patient.registered_on >= start_date, Patient.registered_on <= end_date)
@@ -111,6 +103,150 @@ def view_reports():
     }
 
     return render_template('reports/view.html', **context)
+
+
+@reports_bp.route('/admin', methods=['GET'])
+@login_required
+@role_required('Admin', 'Doctor', 'Nurse')
+def admin_reports_hub():
+    """Milestone 4 Day 2 Administrative Reports Dashboard with 12 report types, filters, search, pagination, and exports."""
+    report_type = request.args.get('report_type', 'patient')
+    start_date_str = request.args.get('start_date', '')
+    end_date_str = request.args.get('end_date', '')
+    doctor_id = request.args.get('doctor_id', type=int)
+    department_id = request.args.get('department_id', type=int)
+    status = request.args.get('status', '')
+    search_query = request.args.get('q', '')
+    page = request.args.get('page', 1, type=int)
+
+    start_date = datetime.datetime.strptime(start_date_str, '%Y-%m-%d').date() if start_date_str else None
+    end_date = datetime.datetime.strptime(end_date_str, '%Y-%m-%d').date() if end_date_str else None
+
+    report_result = fetch_report_data(
+        report_type=report_type,
+        start_date=start_date,
+        end_date=end_date,
+        doctor_id=doctor_id,
+        department_id=department_id,
+        status=status,
+        search_query=search_query,
+        page=page,
+        per_page=15
+    )
+
+    doctors = Doctor.query.all()
+    departments = Department.query.all()
+
+    report_titles = {
+        'patient': '1. Patient Report',
+        'appointment': '2. Appointment Report',
+        'consultation': '3. Consultation Report',
+        'prescription': '4. Prescription Report',
+        'doctor_performance': '5. Doctor Performance Report',
+        'department': '6. Department-wise Report',
+        'monthly': '7. Monthly Hospital Report',
+        'billing': '8. Billing / Revenue Report',
+        'laboratory': '9. Laboratory Report',
+        'pharmacy': '10. Pharmacy Report',
+        'notification': '11. Notification Report',
+        'satisfaction': '12. Patient Satisfaction Report'
+    }
+
+    context = {
+        'title': f"Administrative Reporting - {report_titles.get(report_type, 'Report')}",
+        'report_type': report_type,
+        'report_title': report_titles.get(report_type, 'Report'),
+        'report_data': report_result,
+        'doctors': doctors,
+        'departments': departments,
+        'start_date': start_date_str,
+        'end_date': end_date_str,
+        'doctor_id': doctor_id,
+        'department_id': department_id,
+        'status': status,
+        'search_query': search_query
+    }
+    return render_template('reports/admin_reports.html', **context)
+
+
+@reports_bp.route('/export/csv', methods=['GET'])
+@login_required
+@role_required('Admin', 'Doctor', 'Nurse')
+def export_csv():
+    """Export selected report as CSV file."""
+    report_type = request.args.get('report_type', 'patient')
+    start_date_str = request.args.get('start_date', '')
+    end_date_str = request.args.get('end_date', '')
+    
+    start_date = datetime.datetime.strptime(start_date_str, '%Y-%m-%d').date() if start_date_str else None
+    end_date = datetime.datetime.strptime(end_date_str, '%Y-%m-%d').date() if end_date_str else None
+
+    report_result = fetch_report_data(
+        report_type=report_type,
+        start_date=start_date,
+        end_date=end_date,
+        page=1,
+        per_page=10000
+    )
+
+    csv_data = generate_report_csv(report_type, report_result)
+    filename = f"IPCMS_{report_type}_report_{datetime.date.today()}.csv"
+
+    return Response(
+        csv_data,
+        mimetype="text/csv",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
+
+@reports_bp.route('/export/excel', methods=['GET'])
+@login_required
+@role_required('Admin', 'Doctor', 'Nurse')
+def export_excel():
+    """Export selected report as Excel-compatible CSV file."""
+    report_type = request.args.get('report_type', 'patient')
+    start_date_str = request.args.get('start_date', '')
+    end_date_str = request.args.get('end_date', '')
+    
+    start_date = datetime.datetime.strptime(start_date_str, '%Y-%m-%d').date() if start_date_str else None
+    end_date = datetime.datetime.strptime(end_date_str, '%Y-%m-%d').date() if end_date_str else None
+
+    report_result = fetch_report_data(
+        report_type=report_type,
+        start_date=start_date,
+        end_date=end_date,
+        page=1,
+        per_page=10000
+    )
+
+    csv_data = generate_report_csv(report_type, report_result)
+    filename = f"IPCMS_{report_type}_report_{datetime.date.today()}.xls"
+
+    return Response(
+        csv_data,
+        mimetype="application/vnd.ms-excel",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
+
+@reports_bp.route('/export/pdf', methods=['GET'])
+@login_required
+@role_required('Admin', 'Doctor', 'Nurse')
+def export_pdf():
+    """Printable PDF view for report printing/downloading."""
+    report_type = request.args.get('report_type', 'patient')
+    report_result = fetch_report_data(
+        report_type=report_type,
+        page=1,
+        per_page=1000
+    )
+    context = {
+        'title': f"IPCMS Report - {report_type.replace('_', ' ').title()}",
+        'report_type': report_type,
+        'report_data': report_result,
+        'today': datetime.date.today()
+    }
+    return render_template('reports/pdf_template.html', **context)
 
 
 @reports_bp.route('/search', methods=['GET', 'POST'])
@@ -161,4 +297,3 @@ def generate_patient_report(patient_id: int):
         **history
     }
     return render_template('reports/patient_report.html', **context)
-

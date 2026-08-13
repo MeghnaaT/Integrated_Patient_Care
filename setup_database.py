@@ -94,22 +94,42 @@ def explain_relationships():
     print(explanation)
 
 def seed_data():
+    # Ensure alter table columns exist for existing tables
+    from sqlalchemy import text
+    try:
+        db.session.execute(text("ALTER TABLE patients ADD COLUMN aadhaar_number VARCHAR(12) NULL UNIQUE;"))
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+
     print("Seeding database...")
     
     # 1. Seed Roles
-    admin_role = Role.query.filter_by(name='Admin').first()
-    if not admin_role:
+    role_admin_obj = Role.query.filter_by(name='Admin').first()
+    if not role_admin_obj:
         roles = [
             Role(name='Admin', description='Overall system administration and configuration rights'),
             Role(name='Doctor', description='Clinical consulting, prescription writing, and EHR logging'),
             Role(name='Nurse', description='Vitals collection, calendar management, and patient coordination'),
-            Role(name='Patient', description='Appointment booking and personal EHR viewing rights')
+            Role(name='Patient', description='Appointment booking and personal EHR viewing rights'),
+            Role(name='Pharmacist', description='Pharmacy inventory, stock update, and medicine dispensing'),
+            Role(name='Laboratory Staff', description='Laboratory test processing and test result entry'),
+            Role(name='Receptionist', description='Front-desk patient registration and appointment scheduling')
         ]
         db.session.bulk_save_objects(roles)
         db.session.commit()
         print("-> Roles seeded.")
     else:
-        print("-> Roles already exist.")
+        # Check if new roles need to be added
+        for r_name, r_desc in [
+            ('Pharmacist', 'Pharmacy inventory, stock update, and medicine dispensing'),
+            ('Laboratory Staff', 'Laboratory test processing and test result entry'),
+            ('Receptionist', 'Front-desk patient registration and appointment scheduling')
+        ]:
+            if not Role.query.filter_by(name=r_name).first():
+                db.session.add(Role(name=r_name, description=r_desc))
+        db.session.commit()
+        print("-> Roles updated.")
 
     # 2. Seed Departments
     cardio_dept = Department.query.filter_by(name='Cardiology').first()
@@ -132,6 +152,7 @@ def seed_data():
     role_doctor = Role.query.filter_by(name='Doctor').first().id
     role_nurse = Role.query.filter_by(name='Nurse').first().id
     role_patient = Role.query.filter_by(name='Patient').first().id
+    role_pharm = Role.query.filter_by(name='Pharmacist').first().id
 
     dept_cardio = Department.query.filter_by(name='Cardiology').first().id
     dept_genmed = Department.query.filter_by(name='General Medicine').first().id
@@ -163,14 +184,19 @@ def seed_data():
             password_hash=generate_password_hash('patient123', method='scrypt'),
             role_id=role_patient
         )
-        
-        db.session.add_all([user_admin, user_doctor, user_nurse, user_patient])
+        user_pharm = User(
+            username='pharmacist_user',
+            email='pharmacist@ipcms.com',
+            password_hash=generate_password_hash('pharm123', method='scrypt'),
+            role_id=role_pharm
+        )
+        db.session.add_all([user_admin, user_doctor, user_nurse, user_patient, user_pharm])
         db.session.commit()
         print("-> Users credentials accounts seeded.")
     else:
         print("-> Users already exist.")
         # Ensure default test accounts remain active for test runs
-        for username in ['admin_user', 'doctor_user', 'nurse_user', 'patient_user']:
+        for username in ['admin_user', 'doctor_user', 'nurse_user', 'patient_user', 'pharmacist_user']:
             u = User.query.filter_by(username=username).first()
             if u:
                 u.is_active = True
@@ -181,10 +207,10 @@ def seed_data():
     user_nurse_id = User.query.filter_by(username='nurse_user').first().id
     user_patient_id = User.query.filter_by(username='patient_user').first().id
 
-    # 4. Seed Doctor Demographics
-    doc = db.session.get(Doctor, user_doctor_id)
+    # 4. Seed Doctor Profiles
+    doc = Doctor.query.filter_by(id=user_doctor_id).first()
     if not doc:
-        doctor_record = Doctor(
+        doctor_profile = Doctor(
             id=user_doctor_id,
             first_name='John',
             last_name='Smith',
@@ -195,32 +221,32 @@ def seed_data():
             email_address='doctor@ipcms.com',
             available_time='10:00 AM - 01:00 PM'
         )
-        db.session.add(doctor_record)
+        db.session.add(doctor_profile)
         db.session.commit()
-        print("-> Doctor demographics profiles seeded.")
+        print("-> Doctor profile seeded.")
     else:
-        print("-> Doctor profiles already exist.")
+        print("-> Doctor profile already exists.")
 
-    # 5. Seed Nurse Demographics
-    nurse = db.session.get(Nurse, user_nurse_id)
+    # 5. Seed Nurse Profiles
+    nurse = Nurse.query.filter_by(id=user_nurse_id).first()
     if not nurse:
-        nurse_record = Nurse(
+        nurse_profile = Nurse(
             id=user_nurse_id,
             first_name='Sarah',
             last_name='Connor',
             department_id=dept_genmed,
             contact_number='9876543212'
         )
-        db.session.add(nurse_record)
+        db.session.add(nurse_profile)
         db.session.commit()
-        print("-> Nurse demographics profiles seeded.")
+        print("-> Nurse profile seeded.")
     else:
-        print("-> Nurse profiles already exist.")
+        print("-> Nurse profile already exists.")
 
-    # 6. Seed Patient Demographics (Rahul Kumar matching Slide 6)
-    pat = db.session.get(Patient, user_patient_id)
+    # 6. Seed Patient Profile (Rahul Kumar matching Slide 6 & 16)
+    pat = Patient.query.filter_by(id=user_patient_id).first()
     if not pat:
-        patient_record = Patient(
+        patient_profile = Patient(
             id=user_patient_id,
             first_name='Rahul',
             last_name='Kumar',
@@ -229,28 +255,30 @@ def seed_data():
             blood_group='O+',
             phone_number='9876543210',
             email='patient@ipcms.com',
+            aadhaar_number='123456789012',
             address='123, Green Street, Chennai - 600001',
             medical_history='No known allergies',
             registered_on=datetime.date(2024, 1, 10)
         )
-        db.session.add(patient_record)
+        db.session.add(patient_profile)
         db.session.commit()
-        print("-> Patient demographics profiles seeded.")
+        print("-> Patient profile seeded.")
     else:
-        # Update existing patient to Rahul Kumar for consistency with mockups
         pat.first_name = 'Rahul'
         pat.last_name = 'Kumar'
         pat.age = 28
+        pat.gender = 'Male'
         pat.blood_group = 'O+'
+        pat.phone_number = '9876543210'
+        pat.aadhaar_number = '123456789012'
         pat.address = '123, Green Street, Chennai - 600001'
-        pat.registered_on = datetime.date(2024, 1, 10)
         db.session.commit()
         print("-> Patient profile updated to match EHR mockup.")
 
-    # 7. Seed EHR Details (Vitals matching Slide 6)
+    # 7. Seed EHR Details
     ehr = EHRDetail.query.filter_by(patient_id=user_patient_id).first()
     if not ehr:
-        ehr_obj = EHRDetail(
+        e1 = EHRDetail(
             patient_id=user_patient_id,
             height=175,
             weight=72,
@@ -260,24 +288,24 @@ def seed_data():
             chronic_diseases='No',
             remarks='Patient is healthy.'
         )
-        db.session.add(ehr_obj)
+        db.session.add(e1)
         db.session.commit()
-        print("-> EHR Details (vitals) seeded.")
+        print("-> EHR Details seeded.")
 
     # 8. Seed Allergies
-    allergy = Allergy.query.filter_by(patient_id=user_patient_id).first()
-    if not allergy:
-        all_obj = Allergy(
+    alg = Allergy.query.filter_by(patient_id=user_patient_id).first()
+    if not alg:
+        a1 = Allergy(
             patient_id=user_patient_id,
             allergen='Penicillin',
             reaction='Rash',
             added_on=datetime.date(2024, 1, 10)
         )
-        db.session.add(all_obj)
+        db.session.add(a1)
         db.session.commit()
         print("-> Allergy record seeded.")
 
-    # 9. Seed Active Medications
+    # 9. Seed Current Active Medications
     med = PatientMedication.query.filter_by(patient_id=user_patient_id).first()
     if not med:
         m1 = PatientMedication(patient_id=user_patient_id, medicine='Paracetamol', dosage='500 mg', frequency='Twice a day', start_date=datetime.date(2024, 5, 15))
@@ -287,8 +315,8 @@ def seed_data():
         print("-> Active medications seeded.")
 
     # 10. Seed Consultations
-    consult = Consultation.query.filter_by(patient_id=user_patient_id).first()
-    if not consult:
+    cons = Consultation.query.filter_by(patient_id=user_patient_id).first()
+    if not cons:
         c1 = Consultation(patient_id=user_patient_id, doctor_id=user_doctor_id, consultation_date=datetime.date(2024, 5, 20), symptoms='Fever, Cough, Headache and Body Pain', diagnosis='Viral Fever', treatment_notes='Paracetamol 500 mg - Twice a day. Drink plenty of water and take rest.')
         c2 = Consultation(patient_id=user_patient_id, doctor_id=user_doctor_id, consultation_date=datetime.date(2024, 2, 10), symptoms='Acidity and stomach fullness', diagnosis='Acidity', treatment_notes='Avoid spicy food, take antacids after meals.')
         c3 = Consultation(patient_id=user_patient_id, doctor_id=user_doctor_id, consultation_date=datetime.date(2023, 12, 5), symptoms='High temperature and chills', diagnosis='Fever', treatment_notes='Recovered after medication.')
@@ -296,7 +324,7 @@ def seed_data():
         db.session.commit()
         print("-> Consultations seeded.")
 
-    # 11. Seed Prescriptions & Prescription Items
+    # 11. Seed Prescriptions
     presc = Prescription.query.filter_by(patient_id=user_patient_id).first()
     if not presc:
         p1 = Prescription(patient_id=user_patient_id, doctor_id=user_doctor_id, consultation_id=1, prescription_date=datetime.date(2024, 5, 20), special_instructions='Drink plenty of water and take rest.')
@@ -318,6 +346,95 @@ def seed_data():
         db.session.add_all([l1, l2, l3])
         db.session.commit()
         print("-> Lab reports seeded.")
+
+    # 13. Seed Medicines (Matching Slide 11 Mockup)
+    from models.pharmacy import Medicine, MedicineDispensation
+    from models.billing import Bill, BillItem
+    from models.notification import Notification
+    from models.activity_log import ActivityLog
+
+    med1 = Medicine.query.filter_by(medicine_code='MED101').first()
+    if not med1:
+        m_list = [
+            Medicine(medicine_code='MED101', medicine_name='Paracetamol 500 mg', category='Tablet', manufacturer='ABC Pharma Ltd.', stock=250, unit_price=15.00, expiry_date=datetime.date(2027, 12, 31), status='Available'),
+            Medicine(medicine_code='MED102', medicine_name='Amoxicillin 250 mg', category='Capsule', manufacturer='XYZ Pharmaceuticals', stock=120, unit_price=45.00, expiry_date=datetime.date(2027, 8, 15), status='Available'),
+            Medicine(medicine_code='MED103', medicine_name='Cough Syrup', category='Syrup', manufacturer='HealthCare Pvt. Ltd.', stock=45, unit_price=80.00, expiry_date=datetime.date(2026, 10, 20), status='Low Stock'),
+            Medicine(medicine_code='MED104', medicine_name='Ibuprofen 400 mg', category='Tablet', manufacturer='LifeCare Pharma', stock=300, unit_price=20.00, expiry_date=datetime.date(2028, 5, 10), status='Available'),
+            Medicine(medicine_code='MED105', medicine_name='Vitamin C 500 mg', category='Tablet', manufacturer='Wellness Pharma', stock=75, unit_price=30.00, expiry_date=datetime.date(2027, 3, 5), status='Low Stock')
+        ]
+        db.session.add_all(m_list)
+        db.session.commit()
+        print("-> Pharmacy inventory seeded.")
+
+    # 14. Seed Bills (Matching Slide 16 Mockup)
+    b1 = Bill.query.filter_by(bill_number='BILL1001').first()
+    if not b1:
+        bill1 = Bill(
+            bill_number='BILL1001',
+            patient_id=user_patient_id,
+            consultation_id=1,
+            total_consultation_fee=500.00,
+            total_lab_fee=850.00,
+            total_pharmacy_fee=450.00,
+            other_charges=200.00,
+            sub_total=2000.00,
+            discount=0.00,
+            tax_amount=0.00,
+            total_amount=2000.00,
+            payment_method='UPI',
+            transaction_id='UPI1234567890',
+            payment_status='Paid',
+            bill_date=datetime.date(2026, 7, 22),
+            due_date=datetime.date(2026, 7, 22)
+        )
+        db.session.add(bill1)
+        db.session.commit()
+
+        items = [
+            BillItem(bill_id=bill1.id, service_type='Consultation', description='Dr. Priya - General Medicine', reference_id='CONS1001', amount=500.00),
+            BillItem(bill_id=bill1.id, service_type='Laboratory', description='Complete Blood Count (CBC)', reference_id='LAB1001', amount=550.00),
+            BillItem(bill_id=bill1.id, service_type='Laboratory', description='Lipid Profile', reference_id='LAB1002', amount=300.00),
+            BillItem(bill_id=bill1.id, service_type='Pharmacy', description='Paracetamol 500 mg (10 Tablets)', reference_id='PHAR1001', amount=150.00),
+            BillItem(bill_id=bill1.id, service_type='Pharmacy', description='Amoxicillin 250 mg (10 Capsules)', reference_id='PHAR1002', amount=300.00),
+            BillItem(bill_id=bill1.id, service_type='Other', description='Registration Charges', reference_id='OTH1001', amount=200.00)
+        ]
+        db.session.add_all(items)
+        db.session.commit()
+
+        # Seed additional bill entries for history list
+        b2 = Bill(bill_number='BILL1000', patient_id=user_patient_id, sub_total=1250.00, total_amount=1250.00, payment_method='Card', payment_status='Paid', bill_date=datetime.date(2026, 7, 18), due_date=datetime.date(2026, 7, 18))
+        b3 = Bill(bill_number='BILL0999', patient_id=user_patient_id, sub_total=750.00, total_amount=750.00, payment_method='Cash', payment_status='Paid', bill_date=datetime.date(2026, 7, 15), due_date=datetime.date(2026, 7, 15))
+        b4 = Bill(bill_number='BILL0998', patient_id=user_patient_id, sub_total=1500.00, total_amount=1500.00, payment_method='UPI', payment_status='Unpaid', bill_date=datetime.date(2026, 7, 10), due_date=datetime.date(2026, 7, 25))
+        db.session.add_all([b2, b3, b4])
+        db.session.commit()
+        print("-> Billing and invoices seeded.")
+
+    # 15. Seed Notifications (Matching Slide 26 Mockup)
+    n1 = Notification.query.filter_by(notification_code='NOT1001').first()
+    if not n1:
+        n_list = [
+            Notification(notification_code='NOT1001', patient_id=user_patient_id, user_id=user_patient_id, type='Appointment Reminder', message='Your appointment with Dr. Priya is scheduled on 24-07-2026 at 10:00 AM.', delivery_method='In-App', status='Delivered', is_read=True),
+            Notification(notification_code='NOT1002', patient_id=user_patient_id, user_id=user_patient_id, type='Lab Report', message='Your Blood Test report is available. Please check.', delivery_method='In-App', status='Delivered', is_read=True),
+            Notification(notification_code='NOT1003', patient_id=user_patient_id, user_id=user_patient_id, type='Prescription Ready', message='Your prescription is ready for collection at the pharmacy.', delivery_method='SMS', status='Delivered', is_read=True),
+            Notification(notification_code='NOT1004', patient_id=user_patient_id, user_id=user_patient_id, type='Billing Reminder', message='Your payment of 2,000 is pending. Please make the payment.', delivery_method='In-App', status='Delivered', is_read=True),
+            Notification(notification_code='NOT1005', patient_id=user_patient_id, user_id=user_patient_id, type='Appointment Reminder', message='Your appointment with Dr. Raj is scheduled on 25-07-2026 at 11:30 AM.', delivery_method='SMS', status='Delivered', is_read=False),
+            Notification(notification_code='NOT1006', patient_id=user_patient_id, user_id=user_patient_id, type='Lab Report', message='Your X-Ray report is available. Please check.', delivery_method='In-App', status='Delivered', is_read=False)
+        ]
+        db.session.add_all(n_list)
+        db.session.commit()
+        print("-> Notifications seeded.")
+
+    # 16. Seed Activity Logs
+    al = ActivityLog.query.first()
+    if not al:
+        logs = [
+            ActivityLog(user_id=user_doctor_id, action='Admin user logged in', ip_address='192.168.1.105'),
+            ActivityLog(user_id=user_doctor_id, action='Dr. Priya updated patient record', ip_address='192.168.1.110'),
+            ActivityLog(user_id=user_nurse_id, action='Nurse updated vital signs', ip_address='192.168.1.115')
+        ]
+        db.session.add_all(logs)
+        db.session.commit()
+        print("-> Activity logs seeded.")
 
 
 if __name__ == '__main__':

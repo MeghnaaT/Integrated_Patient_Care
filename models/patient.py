@@ -12,6 +12,7 @@ class Patient(db.Model):
     blood_group = db.Column(db.String(10), nullable=False)
     phone_number = db.Column(db.String(20), nullable=False)
     email = db.Column(db.String(100), nullable=False)
+    aadhaar_number = db.Column(db.String(12), nullable=True, unique=True)
     address = db.Column(db.Text, nullable=False)
     medical_history = db.Column(db.Text, nullable=True, default='No known allergies')
     registered_on = db.Column(db.Date, nullable=False)

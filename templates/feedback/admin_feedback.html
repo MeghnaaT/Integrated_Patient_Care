@@ -1,0 +1,217 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+
+  <!-- Header -->
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h2 class="fw-bold mb-0 text-dark"><i class="bi bi-star-fill text-warning me-2"></i>Patient Feedback & Satisfaction Dashboard</h2>
+      <p class="text-muted mb-0">Monitor patient ratings, review hospital service feedback, and analyze doctor performance</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('feedback.export_csv') }}" class="btn btn-outline-success rounded-pill px-3 shadow-sm fw-bold">
+        <i class="bi bi-file-earmark-spreadsheet me-1"></i>Export CSV
+      </a>
+      <a href="{{ url_for('feedback.export_pdf') }}" class="btn btn-outline-danger rounded-pill px-3 shadow-sm fw-bold" target="_blank">
+        <i class="bi bi-file-earmark-pdf me-1"></i>Export PDF
+      </a>
+    </div>
+  </div>
+
+  <!-- Top Metric Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm text-center py-3 border-start border-4 border-warning">
+        <div class="card-body p-2">
+          <div class="fs-2 fw-bold text-warning">{{ stats.overall_avg_rating }} / 5.0</div>
+          <div class="text-warning fs-6">
+            <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-half"></i>
+          </div>
+          <p class="text-muted small mb-0 mt-1 fw-semibold">Overall Average Rating</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm text-center py-3 border-start border-4 border-success">
+        <div class="card-body p-2">
+          <div class="fs-2 fw-bold text-success">{{ stats.satisfaction_score_pct }}%</div>
+          <span class="badge bg-success-subtle text-success fs-8">Target &ge; 90%</span>
+          <p class="text-muted small mb-0 mt-1 fw-semibold">Patient Satisfaction Score</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm text-center py-3 border-start border-4 border-primary">
+        <div class="card-body p-2">
+          <div class="fs-2 fw-bold text-primary">{{ stats.total_reviews }}</div>
+          <span class="text-muted fs-8">Total Submissions</span>
+          <p class="text-muted small mb-0 mt-1 fw-semibold">Total Reviews</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm text-center py-3 border-start border-4 border-info">
+        <div class="card-body p-2">
+          <div class="fs-2 fw-bold text-info">
+            {% set total_5 = stats.rating_breakdown[5] %}
+            {% set total_rev = stats.total_reviews if stats.total_reviews > 0 else 1 %}
+            {{ ((total_5 / total_rev) * 100)|round(1) }}%
+          </div>
+          <span class="text-info fs-8">5-Star Feedback Share</span>
+          <p class="text-muted small mb-0 mt-1 fw-semibold">Positive Rating Ratio</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 2: Star Breakdown & Service Ratings -->
+  <div class="row g-4 mb-4">
+    <!-- Star Rating Breakdown -->
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm p-4 h-100">
+        <h6 class="fw-bold text-dark mb-3"><i class="bi bi-bar-chart-fill me-2 text-warning"></i>Rating Breakdown</h6>
+        {% for star in range(5, 0, -1) %}
+          {% set count = stats.rating_breakdown[star] %}
+          {% set pct = ((count / (stats.total_reviews if stats.total_reviews > 0 else 1)) * 100)|round(1) %}
+          <div class="d-flex align-items-center mb-2 fs-7">
+            <span class="fw-bold text-dark me-2" style="width: 60px;">{{ star }} Stars</span>
+            <div class="progress flex-grow-1 me-3" style="height: 10px;">
+              <div class="progress-bar bg-warning" role="progressbar" style="width: {{ pct }}%;"></div>
+            </div>
+            <span class="text-muted fw-bold" style="width: 50px;">{{ count }} ({{ pct }}%)</span>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Service-wise Ratings -->
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm p-4 h-100">
+        <h6 class="fw-bold text-dark mb-3"><i class="bi bi-pie-chart-fill me-2 text-primary"></i>Service-wise Average Ratings</h6>
+        <div class="row g-3">
+          {% for st, avg_r in stats.service_wise_ratings.items() %}
+          <div class="col-6">
+            <div class="bg-light p-3 rounded text-center">
+              <span class="text-muted fs-8 d-block mb-1 fw-semibold">{{ st }}</span>
+              <span class="fs-4 fw-bold text-dark">{{ avg_r }} <i class="bi bi-star-fill text-warning fs-6"></i></span>
+            </div>
+          </div>
+          {% else %}
+          <div class="col-12 text-muted text-center py-3">No service ratings recorded yet.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter Toolbar -->
+  <div class="card border-0 shadow-sm p-3 mb-4">
+    <form method="GET" action="{{ url_for('feedback.admin_feedback') }}" class="row g-2 align-items-center">
+      <div class="col-md-3">
+        <select name="service_type" class="form-select fs-7">
+          <option value="">-- Filter by Service --</option>
+          <option value="Doctor Performance" {% if service_type == 'Doctor Performance' %}selected{% endif %}>Doctor Performance</option>
+          <option value="Hospital Service" {% if service_type == 'Hospital Service' %}selected{% endif %}>Hospital Service</option>
+          <option value="Laboratory Service" {% if service_type == 'Laboratory Service' %}selected{% endif %}>Laboratory Service</option>
+          <option value="Pharmacy Service" {% if service_type == 'Pharmacy Service' %}selected{% endif %}>Pharmacy Service</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <select name="rating" class="form-select fs-7">
+          <option value="">-- All Ratings --</option>
+          {% for r in range(5, 0, -1) %}
+            <option value="{{ r }}" {% if rating == r %}selected{% endif %}>{{ r }} Stars</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <select name="doctor_id" class="form-select fs-7">
+          <option value="">-- All Doctors --</option>
+          {% for d in doctors %}
+            <option value="{{ d.id }}" {% if doctor_id == d.id %}selected{% endif %}>Dr. {{ d.full_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-primary w-100 fs-7 fw-bold rounded-pill">
+          <i class="bi bi-funnel-fill me-1"></i>Filter
+        </button>
+      </div>
+      <div class="col-md-2">
+        <a href="{{ url_for('feedback.admin_feedback') }}" class="btn btn-outline-secondary w-100 fs-7 rounded-pill">Reset</a>
+      </div>
+    </form>
+  </div>
+
+  <!-- Feedback Worklist Table -->
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-white py-3 border-0">
+      <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-chat-left-text-fill me-2 text-primary"></i>Patient Feedback Review Worklist</h5>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0 fs-7">
+        <thead class="bg-light text-muted">
+          <tr>
+            <th>Code</th>
+            <th>Date</th>
+            <th>Patient</th>
+            <th>Category</th>
+            <th>Rating</th>
+            <th>Doctor / Dept</th>
+            <th>Comment</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for f in feedbacks %}
+          <tr>
+            <td class="fw-bold text-primary">{{ f.feedback_code }}</td>
+            <td>{{ f.created_date.strftime('%Y-%m-%d') }}</td>
+            <td><span class="fw-semibold">{{ f.patient.full_name if f.patient else 'Patient' }}</span></td>
+            <td><span class="badge bg-light text-dark border">{{ f.service_type }}</span></td>
+            <td>
+              <span class="text-warning fw-bold fs-6">
+                {% for i in range(f.rating) %}<i class="bi bi-star-fill"></i>{% endfor %}
+              </span>
+            </td>
+            <td>
+              {% if f.doctor %}
+                Dr. {{ f.doctor.full_name }}
+              {% elif f.department %}
+                {{ f.department.name }}
+              {% else %}
+                General
+              {% endif %}
+            </td>
+            <td style="max-width: 250px;">{{ f.comment or '-' }}</td>
+            <td>
+              {% if f.status == 'Published' %}
+                <span class="badge bg-success-subtle text-success">Published</span>
+              {% else %}
+                <span class="badge bg-info-subtle text-info">Reviewed</span>
+              {% endif %}
+            </td>
+            <td>
+              <form method="POST" action="{{ url_for('feedback.update_status', id=f.id) }}" class="d-inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <input type="hidden" name="status" value="Reviewed"/>
+                <button type="submit" class="btn btn-sm btn-outline-success py-0 px-2" title="Mark as Reviewed">
+                  <i class="bi bi-check-lg"></i>
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="9" class="text-center py-4 text-muted">No patient feedback submissions found.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

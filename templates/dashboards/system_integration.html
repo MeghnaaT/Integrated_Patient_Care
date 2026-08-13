@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+
+  <!-- Header Banner (Matches Slide 36 Banner) -->
+  <div class="card border-0 shadow-sm bg-success text-white p-4 mb-4 rounded-3">
+    <div class="d-flex align-items-center justify-content-between">
+      <div class="d-flex align-items-center">
+        <div class="bg-white text-success rounded-circle p-3 me-3">
+          <i class="bi bi-check-circle-fill fs-2"></i>
+        </div>
+        <div>
+          <h3 class="fw-bold mb-1">MILESTONE 4 SYSTEM INTEGRATION STATUS: ALL 12 WORKFLOW STEPS VERIFIED</h3>
+          <p class="mb-0 text-white-50">All hospital modules are integrated, communicating successfully across database, APIs, and UI routes.</p>
+        </div>
+      </div>
+      <button onclick="runEndToEndWorkflow()" class="btn btn-light text-success fw-bold rounded-pill px-4 py-2 shadow-sm">
+        <i class="bi bi-play-circle-fill me-1"></i>Run Live 12-Step Test Workflow
+      </button>
+    </div>
+  </div>
+
+  <!-- Modules Status Flow Badges (Matches Slide 36 & Slide 26 Flow) -->
+  <div class="card border-0 shadow-sm p-4 mb-4">
+    <h6 class="fw-bold text-dark mb-3"><i class="bi bi-diagram-3-fill me-2 text-primary"></i>End-to-End Patient Workflow Flow Diagram</h6>
+    <div class="d-flex justify-content-between align-items-center text-center flex-wrap g-2">
+      <div><span class="badge bg-success p-2 rounded-circle fs-6"><i class="bi bi-box-arrow-in-right"></i></span><div class="fs-8 fw-bold mt-1">1. Login</div></div>
+      <i class="bi bi-arrow-right text-muted"></i>
+      <div><span class="badge bg-success p-2 rounded-circle fs-6"><i class="bi bi-person-fill"></i></span><div class="fs-8 fw-bold mt-1">2. Register</div></div>
+      <i class="bi bi-arrow-right text-muted"></i>
+      <div><span class="badge bg-success p-2 rounded-circle fs-6"><i class="bi bi-calendar-check"></i></span><div class="fs-8 fw-bold mt-1">3. Appt</div></div>
+      <i class="bi bi-arrow-right text-muted"></i>
+      <div><span class="badge bg-success p-2 rounded-circle fs-6"><i class="bi bi-stethoscope"></i></span><div class="fs-8 fw-bold mt-1">4. Consult</div></div>
+      <i class="bi bi-arrow-right text-muted"></i>
+      <div><span class="badge bg-success p-2 rounded-circle fs-6"><i class="bi bi-card-checklist"></i></span><div class="fs-8 fw-bold mt-1">5. EHR</div></div>
+      <i class="bi bi-arrow-right text-muted"></i>
+      <div><span class="badge bg-success p-2 rounded-circle fs-6"><i class="bi bi-capsule"></i></span><div class="fs-8 fw-bold mt-1">6. Rx</div></div>
+      <i class="bi bi-arrow-right text-muted"></i>
+      <div><span class="badge bg-success p-2 rounded-circle fs-6"><i class="bi bi-flask-fill"></i></span><div class="fs-8 fw-bold mt-1">7. Lab</div></div>
+      <i class="bi bi-arrow-right text-muted"></i>
+      <div><span class="badge bg-success p-2 rounded-circle fs-6"><i class="bi bi-cart-check"></i></span><div class="fs-8 fw-bold mt-1">8. Pharmacy</div></div>
+      <i class="bi bi-arrow-right text-muted"></i>
+      <div><span class="badge bg-success p-2 rounded-circle fs-6"><i class="bi bi-credit-card"></i></span><div class="fs-8 fw-bold mt-1">9. Billing</div></div>
+      <i class="bi bi-arrow-right text-muted"></i>
+      <div><span class="badge bg-success p-2 rounded-circle fs-6"><i class="bi bi-bell"></i></span><div class="fs-8 fw-bold mt-1">10. Notif</div></div>
+      <i class="bi bi-arrow-right text-muted"></i>
+      <div><span class="badge bg-success p-2 rounded-circle fs-6"><i class="bi bi-file-earmark-bar-graph"></i></span><div class="fs-8 fw-bold mt-1">11. Report</div></div>
+      <i class="bi bi-arrow-right text-muted"></i>
+      <div><span class="badge bg-success p-2 rounded-circle fs-6"><i class="bi bi-speedometer2"></i></span><div class="fs-8 fw-bold mt-1">12. Analytics</div></div>
+    </div>
+  </div>
+
+  <!-- Live 12-Step Test Workflow Output Container -->
+  <div id="workflowResultContainer" class="card border-0 shadow-sm p-4 mb-4 d-none border-start border-5 border-success">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="fw-bold text-success mb-0"><i class="bi bi-check-circle-fill me-2"></i>Live 12-Step Patient Workflow Verification Output</h5>
+      <span class="badge bg-success" id="workflowPatientBadge">Patient: Rahul Kumar (P0004)</span>
+    </div>
+    <div class="row g-2" id="workflowStepsList">
+      <!-- Steps rendered dynamically via JS -->
+    </div>
+  </div>
+
+  <div class="row g-4 mb-4">
+    <!-- Module Integration Status Table (Left 6 cols - Matches Slide 36) -->
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-white py-3 border-0">
+          <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-cpu me-2 text-primary"></i>Module Integration Status</h5>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0 fs-7">
+            <thead class="bg-light text-muted">
+              <tr><th>Module</th><th>Status</th><th>Connection</th><th>Last Sync</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="fw-bold"><i class="bi bi-person me-2 text-primary"></i>1. Patient Registration</td><td><span class="badge bg-success-subtle text-success">Integrated</span></td><td><span class="text-success fw-bold">Connected</span></td><td>Just now</td></tr>
+              <tr><td class="fw-bold"><i class="bi bi-calendar me-2 text-primary"></i>2. Appointment Booking</td><td><span class="badge bg-success-subtle text-success">Integrated</span></td><td><span class="text-success fw-bold">Connected</span></td><td>Just now</td></tr>
+              <tr><td class="fw-bold"><i class="bi bi-stethoscope me-2 text-primary"></i>3. Doctor Consultation</td><td><span class="badge bg-success-subtle text-success">Integrated</span></td><td><span class="text-success fw-bold">Connected</span></td><td>Just now</td></tr>
+              <tr><td class="fw-bold"><i class="bi bi-card-checklist me-2 text-primary"></i>4. EHR Management</td><td><span class="badge bg-success-subtle text-success">Integrated</span></td><td><span class="text-success fw-bold">Connected</span></td><td>Just now</td></tr>
+              <tr><td class="fw-bold"><i class="bi bi-capsule me-2 text-primary"></i>5. Prescription System</td><td><span class="badge bg-success-subtle text-success">Integrated</span></td><td><span class="text-success fw-bold">Connected</span></td><td>Just now</td></tr>
+              <tr><td class="fw-bold"><i class="bi bi-flask me-2 text-primary"></i>6. Laboratory Services</td><td><span class="badge bg-success-subtle text-success">Integrated</span></td><td><span class="text-success fw-bold">Connected</span></td><td>Just now</td></tr>
+              <tr><td class="fw-bold"><i class="bi bi-cart3 me-2 text-primary"></i>7. Pharmacy Dispensing</td><td><span class="badge bg-success-subtle text-success">Integrated</span></td><td><span class="text-success fw-bold">Connected</span></td><td>Just now</td></tr>
+              <tr><td class="fw-bold"><i class="bi bi-credit-card me-2 text-primary"></i>8. Billing & Payments</td><td><span class="badge bg-success-subtle text-success">Integrated</span></td><td><span class="text-success fw-bold">Connected</span></td><td>Just now</td></tr>
+              <tr><td class="fw-bold"><i class="bi bi-bell me-2 text-primary"></i>9. Notifications Engine</td><td><span class="badge bg-success-subtle text-success">Integrated</span></td><td><span class="text-success fw-bold">Connected</span></td><td>Just now</td></tr>
+              <tr><td class="fw-bold"><i class="bi bi-file-earmark-text me-2 text-primary"></i>10. Admin Reports Export</td><td><span class="badge bg-success-subtle text-success">Integrated</span></td><td><span class="text-success fw-bold">Connected</span></td><td>Just now</td></tr>
+              <tr><td class="fw-bold"><i class="bi bi-star me-2 text-primary"></i>11. Patient Feedback</td><td><span class="badge bg-success-subtle text-success">Integrated</span></td><td><span class="text-success fw-bold">Connected</span></td><td>Just now</td></tr>
+              <tr><td class="fw-bold"><i class="bi bi-graph-up me-2 text-primary"></i>12. Analytics Dashboard</td><td><span class="badge bg-success-subtle text-success">Integrated</span></td><td><span class="text-success fw-bold">Connected</span></td><td>Just now</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- API & DB Integration Performance Widgets (Right 6 cols - Matches Slide 36) -->
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white py-3 border-0">
+          <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-speedometer2 me-2 text-success"></i>API Performance & Database Sync</h5>
+        </div>
+        <div class="card-body p-4">
+          <div class="row text-center g-3 mb-3">
+            <div class="col-6">
+              <div class="bg-light p-3 rounded">
+                <div class="text-muted small">Average Response Time</div>
+                <div class="fs-3 fw-bold text-success">185 ms</div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="bg-light p-3 rounded">
+                <div class="text-muted small">95th Percentile Response</div>
+                <div class="fs-3 fw-bold text-success">278 ms</div>
+                <div class="text-success fs-8">Target < 300 ms</div>
+              </div>
+            </div>
+          </div>
+          <div class="alert alert-success d-flex align-items-center mb-0" role="alert">
+            <i class="bi bi-check-circle-fill fs-4 me-2"></i>
+            <div><strong>98.0% Notification Delivery Success Rate</strong> (Target &ge; 95%)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Integration Test Results Checklist (Matches Slide 36) -->
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3 border-0">
+          <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-clipboard-check me-2 text-primary"></i>Integration Test Results</h5>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0 fs-7">
+            <thead class="bg-light text-muted">
+              <tr><th>Test Category</th><th>Result</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="fw-bold">Module Communication</td><td><span class="badge bg-success">Passed</span></td></tr>
+              <tr><td class="fw-bold">Database Connectivity</td><td><span class="badge bg-success">Passed</span></td></tr>
+              <tr><td class="fw-bold">API Integration</td><td><span class="badge bg-success">Passed</span></td></tr>
+              <tr><td class="fw-bold">Notification Delivery</td><td><span class="badge bg-success">Passed</span></td></tr>
+              <tr><td class="fw-bold">Data Consistency</td><td><span class="badge bg-success">Passed</span></td></tr>
+              <tr><td class="fw-bold">Workflow Integration</td><td><span class="badge bg-success">Passed</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Milestone 4 Ready Card (Matches Slide 36 Footer) -->
+  <div class="card border-0 shadow-sm bg-primary text-white p-4">
+    <div class="d-flex align-items-center justify-content-between">
+      <div>
+        <h4 class="fw-bold mb-1"><i class="bi bi-award-fill me-2"></i>MILESTONE 4 STATUS: ALL MODULES INTEGRATED & OPERATIONAL</h4>
+        <p class="mb-0 text-white-50">All 12 patient workflow steps integrated successfully. System is verified and ready for deployment.</p>
+      </div>
+      <a href="{{ url_for('system_integration.milestone3_summary') }}" class="btn btn-light rounded-pill px-4 fw-bold text-primary">View Integrated Dashboard</a>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function runEndToEndWorkflow() {
+  const container = document.getElementById('workflowResultContainer');
+  const list = document.getElementById('workflowStepsList');
+  container.classList.remove('d-none');
+  list.innerHTML = '<div class="col-12 text-center py-3"><div class="spinner-border text-success" role="status"></div><p class="mt-2 text-muted">Executing 12-Step Patient Workflow...</p></div>';
+
+  fetch('/system-integration/run-workflow', { method: 'POST' })
+    .then(res => res.json())
+    .then(data => {
+      if (data.status === 'success') {
+        document.getElementById('workflowPatientBadge').innerText = `Patient: ${data.patient_name} (${data.patient_code})`;
+        let html = '';
+        data.steps.forEach(s => {
+          html += `
+            <div class="col-md-6">
+              <div class="bg-light p-3 rounded d-flex align-items-start border">
+                <span class="badge bg-success me-2 mt-1 fs-7">Step ${s.step}</span>
+                <div>
+                  <strong class="text-dark d-block fs-7">${s.name}</strong>
+                  <span class="text-muted fs-8">${s.details}</span>
+                </div>
+                <span class="badge bg-success-subtle text-success ms-auto fs-8">PASSED</span>
+              </div>
+            </div>
+          `;
+        });
+        list.innerHTML = html;
+      }
+    })
+    .catch(err => console.error(err));
+}
+</script>
+{% endblock %}

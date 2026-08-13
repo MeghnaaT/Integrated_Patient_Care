@@ -1,130 +1,132 @@
-# Deployment Guide — IPCMS Production Setup
+# Integrated Patient Care Management System (IPCMS)
+## Production & Deployment Guide
 
-This document outlines the procedures to deploy the **Integrated Patient Care Management System (IPCMS)** into a production environment.
-
----
-
-## 1. Production Architecture Overview
-
-A secure, standard production deployment utilizes a multi-tier server setup:
-* **Client (Web Browser):** Requests index and assets via HTTPS.
-* **Nginx (Reverse Proxy & SSL):** Terminates HTTPS, serves static files directly, and forwards dynamic requests to the WSGI container.
-* **Gunicorn (WSGI Server):** Spawns and manages workers to execute the Flask application.
-* **MySQL Server (Database):** Hosted on a secure database instance (e.g., AWS RDS or a dedicated DB host) accessible only via internal network connections.
+This guide provides step-by-step instructions to deploy, configure, run, and maintain IPCMS on a clean Windows machine or production server.
 
 ---
 
-## 2. Setting Up Production Configurations
+### System Requirements
 
-Before launching the app, modify the `.env` settings for production:
-```ini
-FLASK_ENV=production
-SECRET_KEY=generate-a-strong-random-secure-64-character-hex-value
-DB_USER=production_db_user
-DB_PASSWORD=production_db_secure_password
-DB_HOST=private-ip-of-mysql-host
-DB_PORT=3306
-DB_NAME=hospital_db
-```
-
-### Production Security Checklist
-* **Debug Mode:** Always set `FLASK_ENV=production` or `DEBUG=False`. Debug mode exposes code stack traces and arbitrary code execution pathways.
-* **Secure Cookies:** In production, Flask-Session and Flask-Login cookies are flagged as secure:
-  - `SESSION_COOKIE_SECURE = True`
-  - `REMEMBER_COOKIE_SECURE = True`
+- **Operating System**: Windows 10/11 or Windows Server 2019+
+- **Python**: Python 3.10+ (Recommended: 3.13)
+- **Database**: MySQL 8.0 Server (Running on localhost:3306 or remote host)
+- **Network Port**: 5000 (Default Flask web server port)
 
 ---
 
-## 3. WSGI Container: Gunicorn Setup
+### Step 1: Environment Setup & Dependencies
 
-On a Linux/Ubuntu production server, Gunicorn is the recommended WSGI container.
+1. **Clone or Copy Codebase**:
+   ```cmd
+   git clone <repository_url> Integrated_Patient_Care
+   cd Integrated_Patient_Care
+   ```
 
-### Step 3.1: Install Gunicorn
-Inside your server virtual environment:
-```bash
-pip install gunicorn
-```
+2. **Create Python Virtual Environment**:
+   ```cmd
+   python -m venv .venv
+   .venv\Scripts\activate
+   ```
 
-### Step 3.2: Configure Systemd Daemon
-Create a system service file `/etc/systemd/system/ipcms.service` to keep the application running automatically:
-```ini
-[Unit]
-Description=Gunicorn instance to serve IPCMS
-After=network.target
-
-[Service]
-User=www-data
-Group=www-data
-WorkingDirectory=/var/www/Integrated_Patient_Care
-Environment="PATH=/var/www/Integrated_Patient_Care/.venv/bin"
-ExecStart=/var/www/Integrated_Patient_Care/.venv/bin/gunicorn --workers 3 --bind 127.0.0.1:5000 run:app
-
-[Install]
-WantedBy=multi-user.target
-```
-Enable and start the service:
-```bash
-sudo systemctl daemon-reload
-sudo systemctl start ipcms
-sudo systemctl enable ipcms
-```
+3. **Install Dependencies**:
+   ```cmd
+   pip install -r requirements.txt
+   ```
 
 ---
 
-## 4. Reverse Proxy: Nginx Configuration
+### Step 2: Configuration & Environment Variables
 
-Create an Nginx server block `/etc/nginx/sites-available/ipcms`:
-```nginx
-server {
-    listen 80;
-    server_name yourdomain.com www.yourdomain.com;
+1. **Copy Environment Template**:
+   ```cmd
+   copy .env.example .env
+   ```
 
-    # Redirect all HTTP requests to HTTPS
-    location / {
-        return 301 https://$host$request_uri;
-    }
-}
+2. **Configure `.env` Secrets**:
+   Open `.env` and set your credentials:
+   ```env
+   DB_USER=root
+   DB_PASSWORD=your_actual_mysql_password
+   DB_HOST=localhost
+   DB_PORT=3306
+   DB_NAME=hospital_db
 
-server {
-    listen 443 ssl http2;
-    server_name yourdomain.com www.yourdomain.com;
+   SECRET_KEY=generate_a_secure_random_key_here
+   FLASK_ENV=production
+   ```
 
-    # SSL Certificate Paths
-    ssl_certificate /etc/letsencrypt/live/yourdomain.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/yourdomain.com/privkey.pem;
-    ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_ciphers HIGH:!aNULL:!MD5;
+   *To generate a secure SECRET_KEY*:
+   ```cmd
+   python -c "import secrets; print(secrets.token_hex(32))"
+   ```
 
-    # Serve static assets directly for high performance
-    location /static/ {
-        alias /var/www/Integrated_Patient_Care/static/;
-        expires 30d;
-        add_header Cache-Control "public, no-transform";
-    }
+---
 
-    # Proxy dynamic requests to Gunicorn
-    location / {
-        proxy_pass http://127.0.0.1:5000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
+### Step 3: Database Initialization & Seeding
+
+Run the database setup script to verify MySQL liveness, create tables, and populate default seed data & roles:
+
+```cmd
+.venv\Scripts\python.exe setup_database.py
 ```
-Enable the site and reload Nginx:
-```bash
-sudo ln -s /etc/nginx/sites-available/ipcms /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl restart nginx
+
+Default System Roles & Accounts Created:
+- **Admin**: `admin@ipcms.com` / `admin123`
+- **Doctor**: `doctor@ipcms.com` / `doctor123`
+- **Nurse**: `nurse@ipcms.com` / `nurse123`
+- **Patient**: `patient@ipcms.com` / `patient123`
+- **Pharmacist**: `pharmacist@ipcms.com` / `pharm123`
+
+---
+
+### Step 4: Running the Application
+
+#### Development / Testing Mode:
+```cmd
+.venv\Scripts\python.exe run.py
+```
+
+#### Production Deployment (Waitress WSGI Server on Windows):
+```cmd
+pip install waitress
+waitress-serve --port=5000 app:create_app()
+```
+
+Access the application in browser at: `http://localhost:5000`
+
+---
+
+### Step 5: Database Backup & Recovery Procedures
+
+#### 1. Execute Database Backup:
+Exports database schema and records into a timestamped `.sql` file in `backups/`:
+```cmd
+.venv\Scripts\python.exe scripts/backup_database.py
+```
+
+#### 2. Restore Database from Backup:
+Restores schema and data from the latest backup file:
+```cmd
+.venv\Scripts\python.exe scripts/restore_database.py
+```
+
+Or specify a target backup file:
+```cmd
+.venv\Scripts\python.exe scripts/restore_database.py backups/hospital_db_backup_20260813_233809.sql
 ```
 
 ---
 
-## 5. Obtaining Free SSL with Certbot (Let's Encrypt)
-Run Certbot to automatically configure secure SSL certificates:
-```bash
-sudo apt install certbot python3-certbot-nginx
-sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com
+### Step 6: Smoke Testing & Verification
+
+Run the automated test suite to ensure all 44 unit and integration tests pass cleanly:
+
+```cmd
+.venv\Scripts\python.exe -m unittest discover tests
 ```
-Certbot will configure certificate auto-renewal via a daily systemd cron job automatically.
+
+Expected Output:
+```text
+Ran 44 tests in 18.824s
+OK
+```

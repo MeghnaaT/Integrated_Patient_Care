@@ -31,6 +31,71 @@ def roles_required(*role_names: str):
     return decorator
 
 
+@patient_bp.route('/advanced-search', methods=['GET', 'POST'])
+@login_required
+@role_required('Admin', 'Doctor', 'Nurse', 'Receptionist', 'Pharmacist')
+def advanced_search():
+    """Day 1 Advanced Patient Search matching Slide 5 & 6 mockups."""
+    from forms.search_form import AdvancedPatientSearchForm
+    from models.patient import Patient
+
+    form = AdvancedPatientSearchForm()
+    query_str = request.args.get('q', '').strip()
+    criteria = request.args.get('criteria', 'all').strip()
+
+    if form.validate_on_submit():
+        query_str = form.query.data.strip() if form.query.data else ''
+        criteria = form.search_criteria.data
+
+    results = []
+    if query_str:
+        q = f"%{query_str}%"
+        p_query = Patient.query
+        if criteria == 'patient_id':
+            clean_id = query_str.upper().replace('PAT', '').replace('P', '')
+            if clean_id.isdigit():
+                p_query = p_query.filter(Patient.id == int(clean_id))
+        elif criteria == 'name':
+            p_query = p_query.filter((Patient.first_name.ilike(q)) | (Patient.last_name.ilike(q)))
+        elif criteria == 'phone':
+            p_query = p_query.filter(Patient.phone_number.ilike(q))
+        elif criteria == 'aadhaar':
+            p_query = p_query.filter(Patient.aadhaar_number.ilike(q))
+        elif criteria == 'email':
+            p_query = p_query.filter(Patient.email.ilike(q))
+        else: # All
+            clean_id = query_str.upper().replace('PAT', '').replace('P', '')
+            if clean_id.isdigit():
+                p_query = p_query.filter(
+                    (Patient.id == int(clean_id)) |
+                    (Patient.first_name.ilike(q)) |
+                    (Patient.last_name.ilike(q)) |
+                    (Patient.phone_number.ilike(q)) |
+                    (Patient.aadhaar_number.ilike(q)) |
+                    (Patient.email.ilike(q))
+                )
+            else:
+                p_query = p_query.filter(
+                    (Patient.first_name.ilike(q)) |
+                    (Patient.last_name.ilike(q)) |
+                    (Patient.phone_number.ilike(q)) |
+                    (Patient.aadhaar_number.ilike(q)) |
+                    (Patient.email.ilike(q))
+                )
+        results = p_query.all()
+    else:
+        results = Patient.query.all()
+
+    return render_template(
+        'patients/advanced_search.html',
+        form=form,
+        patients=results,
+        query_str=query_str,
+        criteria=criteria,
+        title='Patient Search Worklist'
+    )
+
+
 @patient_bp.route('/dashboard')
 @login_required
 @role_required('Patient')

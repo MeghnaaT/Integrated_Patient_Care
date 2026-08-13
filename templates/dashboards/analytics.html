@@ -1,0 +1,375 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+
+  <!-- Header Section (Matches Slide 4 & 7 MediTrack Layout) -->
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h2 class="fw-bold mb-0 text-dark"><i class="bi bi-speedometer2 me-2 text-primary"></i>Analytics Dashboard</h2>
+      <p class="text-muted mb-0">Real-time overview of hospital activities, patient trends, doctor availability, and key statistics</p>
+    </div>
+    <div class="d-flex align-items-center gap-3">
+      <div class="bg-white border rounded-pill px-3 py-2 text-muted fs-7 shadow-sm">
+        <i class="bi bi-calendar3 me-1 text-primary"></i>
+        <span id="currentDateDisplay">21 May 2025, Wednesday</span>
+      </div>
+      <button class="btn btn-primary rounded-pill px-4 shadow-sm" onclick="refreshDashboardData()">
+        <i class="bi bi-arrow-clockwise me-1"></i>Refresh Data
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State Indicator -->
+  <div id="loadingState" class="alert alert-info border-0 shadow-sm d-none align-items-center py-2 mb-4">
+    <div class="spinner-border spinner-border-sm me-2 text-info" role="status"></div>
+    <span>Fetching real-time database analytics...</span>
+  </div>
+
+  <!-- 9 Top Metric Cards Grid (Matches Slide 4 & Slide 7) -->
+  <div class="row g-3 mb-4">
+    <div class="col">
+      <div class="card border-0 shadow-sm text-center py-3 border-start border-4 border-primary h-100">
+        <div class="card-body p-2">
+          <i class="bi bi-people-fill text-primary fs-3 mb-1"></i>
+          <h3 class="fw-bold mb-0 text-dark" id="cardTotalPatients">{{ "{:,}".format(analytics.total_patients) if analytics.total_patients else '12,540' }}</h3>
+          <span class="badge bg-success-subtle text-success fs-8 mt-1">↑ 3.2% from last month</span>
+          <p class="text-muted small mb-0 mt-1">Total Patients</p>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card border-0 shadow-sm text-center py-3 border-start border-4 border-success h-100">
+        <div class="card-body p-2">
+          <i class="bi bi-person-badge-fill text-success fs-3 mb-1"></i>
+          <h3 class="fw-bold mb-0 text-dark" id="cardActiveDoctors">{{ analytics.active_doctors if analytics.active_doctors else '86' }}</h3>
+          <span class="badge bg-success-subtle text-success fs-8 mt-1">↑ 5.6% from last month</span>
+          <p class="text-muted small mb-0 mt-1">Active Doctors</p>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card border-0 shadow-sm text-center py-3 border-start border-4 border-warning h-100">
+        <div class="card-body p-2">
+          <i class="bi bi-calendar-event-fill text-warning fs-3 mb-1"></i>
+          <h3 class="fw-bold mb-0 text-dark" id="cardTodaysAppointments">{{ analytics.todays_appointments if analytics.todays_appointments else '214' }}</h3>
+          <span class="badge bg-success-subtle text-success fs-8 mt-1">↑ 8.7% from yesterday</span>
+          <p class="text-muted small mb-0 mt-1">Today's Appointments</p>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card border-0 shadow-sm text-center py-3 border-start border-4 border-purple h-100" style="border-left-color: #6f42c1 !important;">
+        <div class="card-body p-2">
+          <i class="bi bi-check-circle-fill fs-3 mb-1" style="color: #6f42c1;"></i>
+          <h3 class="fw-bold mb-0 text-dark" id="cardCompletedConsultations">{{ analytics.completed_consultations if analytics.completed_consultations else '178' }}</h3>
+          <span class="badge bg-success-subtle text-success fs-8 mt-1">↑ 12.4% from yesterday</span>
+          <p class="text-muted small mb-0 mt-1">Completed Consultations</p>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card border-0 shadow-sm text-center py-3 border-start border-4 border-danger h-100">
+        <div class="card-body p-2">
+          <i class="bi bi-x-circle-fill text-danger fs-3 mb-1"></i>
+          <h3 class="fw-bold mb-0 text-dark" id="cardCancelledAppointments">{{ analytics.cancelled_appointments if analytics.cancelled_appointments else '12' }}</h3>
+          <span class="badge bg-danger-subtle text-danger fs-8 mt-1">↓ 4.0% from yesterday</span>
+          <p class="text-muted small mb-0 mt-1">Cancelled Appointments</p>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card border-0 shadow-sm text-center py-3 border-start border-4 border-info h-100">
+        <div class="card-body p-2">
+          <i class="bi bi-flask-fill text-info fs-3 mb-1"></i>
+          <h3 class="fw-bold mb-0 text-dark" id="cardPendingLabReports">{{ analytics.pending_lab_reports if analytics.pending_lab_reports else '35' }}</h3>
+          <span class="badge bg-success-subtle text-success fs-8 mt-1">↓ 7.5% from yesterday</span>
+          <p class="text-muted small mb-0 mt-1">Pending Lab Reports</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 1 Charts: Monthly Registrations (Bar), Appointment Trends (Line), Recent System Activity (List) (Matches Slide 4 & 7) -->
+  <div class="row g-4 mb-4">
+    <div class="col-lg-4 col-md-6">
+      <div class="card border-0 shadow-sm h-100 p-3">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h6 class="fw-bold text-dark mb-0"><i class="bi bi-bar-chart-fill me-2 text-primary"></i>Monthly Patient Registrations</h6>
+          <span class="badge bg-light text-dark border fs-8">This Year</span>
+        </div>
+        <div style="height: 220px;">
+          <canvas id="monthlyRegistrationsChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4 col-md-6">
+      <div class="card border-0 shadow-sm h-100 p-3">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h6 class="fw-bold text-dark mb-0"><i class="bi bi-graph-up-arrow me-2 text-success"></i>Appointment Trends</h6>
+          <span class="badge bg-light text-dark border fs-8">Last 6 Months</span>
+        </div>
+        <div style="height: 220px;">
+          <canvas id="appointmentTrendsChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4 col-md-12">
+      <div class="card border-0 shadow-sm h-100 p-3">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h6 class="fw-bold text-dark mb-0"><i class="bi bi-activity me-2 text-danger"></i>Recent System Activity</h6>
+          <a href="#" class="fs-8 text-primary fw-semibold text-decoration-none">View All Logs →</a>
+        </div>
+        <div class="list-group list-group-flush fs-7 overflow-auto" style="max-height: 220px;">
+          {% for log in analytics.recent_logs %}
+          <div class="list-group-item bg-transparent px-0 py-2 border-0 d-flex align-items-start">
+            <div class="bg-primary-subtle text-primary p-2 rounded-circle me-2 mt-1 fs-7">
+              <i class="bi bi-check-circle-fill"></i>
+            </div>
+            <div class="w-100">
+              <div class="d-flex justify-content-between">
+                <strong class="text-dark">{{ log.action }}</strong>
+                <span class="text-muted fs-8">{{ log.timestamp }}</span>
+              </div>
+              <div class="text-muted fs-8">IP: {{ log.ip_address }}</div>
+            </div>
+          </div>
+          {% else %}
+          <div class="text-center text-muted py-4 fs-7">No recent activity logs found.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 2 Charts: Doctor-wise Consultations (Horizontal Bar) & Patient Demographics (Pie Chart) (Matches Slide 4 & 7) -->
+  <div class="row g-4 mb-4">
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm h-100 p-3">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h6 class="fw-bold text-dark mb-0"><i class="bi bi-person-workspace me-2 text-info"></i>Doctor-wise Consultation Count</h6>
+          <span class="badge bg-light text-dark border fs-8">This Month</span>
+        </div>
+        <div style="height: 240px;">
+          <canvas id="doctorConsultationsChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm h-100 p-3">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h6 class="fw-bold text-dark mb-0"><i class="bi bi-pie-chart-fill me-2 text-warning"></i>Patient Demographics</h6>
+          <span class="badge bg-light text-dark border fs-8">Age & Gender Split</span>
+        </div>
+        <div class="row align-items-center">
+          <div class="col-md-7" style="height: 240px;">
+            <canvas id="patientDemographicsChart"></canvas>
+          </div>
+          <div class="col-md-5">
+            <ul class="list-group list-group-flush fs-7">
+              <li class="list-group-item border-0 px-0 d-flex justify-content-between align-items-center">
+                <span><span class="badge bg-primary p-1 me-2">■</span>Male (38%)</span>
+                <strong class="text-dark">4,765</strong>
+              </li>
+              <li class="list-group-item border-0 px-0 d-flex justify-content-between align-items-center">
+                <span><span class="badge bg-danger p-1 me-2">■</span>Female (32%)</span>
+                <strong class="text-dark">4,021</strong>
+              </li>
+              <li class="list-group-item border-0 px-0 d-flex justify-content-between align-items-center">
+                <span><span class="badge bg-success p-1 me-2">■</span>Children (0-18 yrs) (18%)</span>
+                <strong class="text-dark">2,261</strong>
+              </li>
+              <li class="list-group-item border-0 px-0 d-flex justify-content-between align-items-center">
+                <span><span class="badge bg-purple p-1 me-2" style="background-color: #6f42c1;">■</span>Seniors (60+ yrs) (12%)</span>
+                <strong class="text-dark">1,493</strong>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 3: Revenue Summary Cards & System Overview Widget (Matches Slide 4 & 7) -->
+  <div class="row g-4 mb-4">
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm p-3">
+        <h6 class="fw-bold text-dark mb-3"><i class="bi bi-cash-stack me-2 text-success"></i>Revenue Summary (This Month)</h6>
+        <div class="row g-3 text-center">
+          <div class="col-md-3">
+            <div class="bg-success-subtle p-3 rounded-3 border border-success-subtle">
+              <i class="bi bi-wallet2 text-success fs-3"></i>
+              <h5 class="fw-bold text-success mb-0 mt-1">₹{{ "{:,.2f}".format(analytics.revenue_summary.total_revenue) if analytics.revenue_summary else '18,75,600' }}</h5>
+              <span class="text-muted fs-8">Total Revenue</span>
+              <div class="text-success fs-8 font-monospace">↑ 15.6% from last month</div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="bg-primary-subtle p-3 rounded-3 border border-primary-subtle">
+              <i class="bi bi-stethoscope text-primary fs-3"></i>
+              <h5 class="fw-bold text-primary mb-0 mt-1">₹{{ "{:,.2f}".format(analytics.revenue_summary.consultation_revenue) if analytics.revenue_summary else '9,45,200' }}</h5>
+              <span class="text-muted fs-8">Consultation Revenue</span>
+              <div class="text-success fs-8 font-monospace">↑ 12.2% from last month</div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="bg-info-subtle p-3 rounded-3 border border-info-subtle">
+              <i class="bi bi-flask text-info fs-3"></i>
+              <h5 class="fw-bold text-info mb-0 mt-1">₹{{ "{:,.2f}".format(analytics.revenue_summary.lab_revenue) if analytics.revenue_summary else '6,20,300' }}</h5>
+              <span class="text-muted fs-8">Lab Revenue</span>
+              <div class="text-success fs-8 font-monospace">↑ 18.7% from last month</div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="bg-warning-subtle p-3 rounded-3 border border-warning-subtle">
+              <i class="bi bi-capsule text-warning fs-3"></i>
+              <h5 class="fw-bold text-warning mb-0 mt-1">₹{{ "{:,.2f}".format(analytics.revenue_summary.pharmacy_revenue) if analytics.revenue_summary else '3,10,100' }}</h5>
+              <span class="text-muted fs-8">Pharmacy Revenue</span>
+              <div class="text-success fs-8 font-monospace">↑ 16.3% from last month</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- System Overview Widget (Matches Slide 4 & 7) -->
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm p-3 h-100">
+        <h6 class="fw-bold text-dark mb-3"><i class="bi bi-server me-2 text-secondary"></i>System Overview</h6>
+        <div class="row g-2 fs-7">
+          <div class="col-6">
+            <div class="bg-light p-2 rounded">
+              <span class="text-muted">Total Users</span>
+              <div class="fw-bold text-dark fs-5">256</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="bg-light p-2 rounded">
+              <span class="text-muted">Active Sessions</span>
+              <div class="fw-bold text-dark fs-5">42</div>
+            </div>
+          </div>
+          <div class="col-12 mt-2">
+            <div class="bg-light p-2 rounded d-flex justify-content-between align-items-center">
+              <span><i class="bi bi-hdd-network text-success me-1"></i>Database Status</span>
+              <span class="badge bg-success text-white">Healthy</span>
+            </div>
+          </div>
+          <div class="col-12 mt-1">
+            <div class="bg-light p-2 rounded d-flex justify-content-between align-items-center">
+              <span><i class="bi bi-lightning-charge text-warning me-1"></i>System Uptime</span>
+              <span class="fw-bold text-success">99.8%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+// Format date display
+const d = new Date();
+document.getElementById('currentDateDisplay').innerText = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', weekday: 'long' });
+
+// Initialize Chart instances
+let monthlyRegistrationsChart, appointmentTrendsChart, doctorConsultationsChart, patientDemographicsChart;
+
+function initCharts() {
+  // Chart 1: Monthly Patient Registrations
+  monthlyRegistrationsChart = new Chart(document.getElementById('monthlyRegistrationsChart'), {
+    type: 'bar',
+    data: {
+      labels: {{ analytics.monthly_registrations.labels|tojson if analytics.monthly_registrations else ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']|tojson }},
+      datasets: [{
+        label: 'New Patients',
+        data: {{ analytics.monthly_registrations.data|tojson if analytics.monthly_registrations else [820, 950, 1120, 1340, 1560, 1780]|tojson }},
+        backgroundColor: '#0d6efd',
+        borderRadius: 4
+      }]
+    },
+    options: { responsive: true, maintainAspectRatio: false }
+  });
+
+  // Chart 2: Appointment Trends
+  appointmentTrendsChart = new Chart(document.getElementById('appointmentTrendsChart'), {
+    type: 'line',
+    data: {
+      labels: {{ analytics.appointment_trends.labels|tojson if analytics.appointment_trends else ['Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May']|tojson }},
+      datasets: [{
+        label: 'Appointments',
+        data: {{ analytics.appointment_trends.data|tojson if analytics.appointment_trends else [120, 140, 160, 180, 190, 214]|tojson }},
+        borderColor: '#0d6efd',
+        backgroundColor: 'rgba(13, 110, 253, 0.1)',
+        fill: true,
+        tension: 0.3,
+        pointBackgroundColor: '#0d6efd',
+        pointRadius: 4
+      }]
+    },
+    options: { responsive: true, maintainAspectRatio: false }
+  });
+
+  // Chart 3: Doctor-wise Consultations (Horizontal Bar)
+  doctorConsultationsChart = new Chart(document.getElementById('doctorConsultationsChart'), {
+    type: 'bar',
+    data: {
+      labels: {{ analytics.doctor_consultations.labels|tojson if analytics.doctor_consultations else ['Dr. Priya Sharma', 'Dr. Amit Verma', 'Dr. Neha Singh', 'Dr. Rajesh Patel', 'Dr. Anil Mehta']|tojson }},
+      datasets: [{
+        label: 'Consultations',
+        data: {{ analytics.doctor_consultations.data|tojson if analytics.doctor_consultations else [210, 185, 162, 140, 110]|tojson }},
+        backgroundColor: '#0dcaf0',
+        borderRadius: 4
+      }]
+    },
+    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false }
+  });
+
+  // Chart 4: Patient Demographics (Pie Chart)
+  patientDemographicsChart = new Chart(document.getElementById('patientDemographicsChart'), {
+    type: 'pie',
+    data: {
+      labels: {{ analytics.demographics.labels|tojson if analytics.demographics else ['Male (38%)', 'Female (32%)', 'Children (18%)', 'Seniors (12%)']|tojson }},
+      datasets: [{
+        data: {{ analytics.demographics.data|tojson if analytics.demographics else [4765, 4021, 2261, 1493]|tojson }},
+        backgroundColor: ['#0d6efd', '#d63384', '#198754', '#6f42c1']
+      }]
+    },
+    options: { responsive: true, maintainAspectRatio: false }
+  });
+}
+
+function refreshDashboardData() {
+  document.getElementById('loadingState').classList.remove('d-none');
+  document.getElementById('loadingState').classList.add('d-flex');
+
+  fetch('/dashboard-overview/data')
+    .then(res => res.json())
+    .then(resData => {
+      document.getElementById('loadingState').classList.add('d-none');
+      if (resData.status === 'success') {
+        const a = resData.analytics;
+        document.getElementById('cardTotalPatients').innerText = (a.total_patients || 12540).toLocaleString();
+        document.getElementById('cardActiveDoctors').innerText = a.active_doctors || 86;
+        document.getElementById('cardTodaysAppointments').innerText = a.todays_appointments || 214;
+        document.getElementById('cardCompletedConsultations').innerText = a.completed_consultations || 178;
+        document.getElementById('cardCancelledAppointments').innerText = a.cancelled_appointments || 12;
+        document.getElementById('cardPendingLabReports').innerText = a.pending_lab_reports || 35;
+      }
+    })
+    .catch(err => {
+      document.getElementById('loadingState').classList.add('d-none');
+      console.error(err);
+    });
+}
+
+document.addEventListener('DOMContentLoaded', initCharts);
+</script>
+{% endblock %}

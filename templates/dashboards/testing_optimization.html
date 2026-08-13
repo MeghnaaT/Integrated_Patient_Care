@@ -1,0 +1,250 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+
+  <!-- Header -->
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h2 class="fw-bold mb-0 text-dark"><i class="bi bi-speedometer me-2 text-primary"></i>Testing & Performance Optimization</h2>
+      <p class="text-muted mb-0">Monitor system performance, run tests, measure API latency (< 300 ms), and optimize application efficiency</p>
+    </div>
+    <div>
+      <button onclick="runLivePerformanceTest()" class="btn btn-primary rounded-pill px-4 shadow-sm fw-bold">
+        <i class="bi bi-play-circle-fill me-1"></i>Run Performance Test
+      </button>
+    </div>
+  </div>
+
+  <!-- Top 5 Metric Cards (Matches Slide 15 Mockup) -->
+  <div class="row g-3 mb-4">
+    <div class="col">
+      <div class="card border-0 shadow-sm text-center py-3 border-start border-4 border-primary">
+        <div class="card-body p-2">
+          <div class="fs-2 fw-bold text-primary" id="cardOverallScore">{{ metrics.overall_score }}/100</div>
+          <span class="badge bg-success-subtle text-success fs-8">↑ 8% from last test</span>
+          <p class="text-muted small mb-0 mt-1 fw-semibold">Overall Performance Score</p>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card border-0 shadow-sm text-center py-3 border-start border-4 border-success">
+        <div class="card-body p-2">
+          <div class="fs-2 fw-bold text-success" id="cardAvgResponse">{{ metrics.avg_response_time }}</div>
+          <span class="badge bg-success-subtle text-success fs-8">↓ 15 ms improvement</span>
+          <p class="text-muted small mb-0 mt-1 fw-semibold">Average Response Time</p>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card border-0 shadow-sm text-center py-3 border-start border-4 border-info">
+        <div class="card-body p-2">
+          <div class="fs-2 fw-bold text-info">{{ metrics.system_throughput }}</div>
+          <span class="badge bg-success-subtle text-success fs-8">↑ 22 req/s improvement</span>
+          <p class="text-muted small mb-0 mt-1 fw-semibold">System Throughput</p>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card border-0 shadow-sm text-center py-3 border-start border-4 border-warning">
+        <div class="card-body p-2">
+          <div class="fs-2 fw-bold text-warning">{{ metrics.error_rate }}</div>
+          <span class="badge bg-success-subtle text-success fs-8">↓ 0.15% improvement</span>
+          <p class="text-muted small mb-0 mt-1 fw-semibold">Error Rate</p>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card border-0 shadow-sm text-center py-3 border-start border-4 border-purple" style="border-left-color: #6f42c1 !important;">
+        <div class="card-body p-2">
+          <div class="fs-2 fw-bold text-purple" style="color: #6f42c1;">{{ metrics.system_uptime }}</div>
+          <span class="badge bg-success-subtle text-success fs-8">↑ 0.02% improvement</span>
+          <p class="text-muted small mb-0 mt-1 fw-semibold">Uptime</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 1: Response Time Trend Line Chart & Performance by Module Table (Matches Slide 15) -->
+  <div class="row g-4 mb-4">
+    <div class="col-lg-7">
+      <div class="card border-0 shadow-sm h-100 p-3">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h6 class="fw-bold text-dark mb-0"><i class="bi bi-graph-up me-2 text-primary"></i>Response Time Trend (Last 24 Hours)</h6>
+          <span class="badge bg-light text-dark border fs-8">Avg: {{ metrics.avg_response_time }}</span>
+        </div>
+        <div style="height: 240px;">
+          <canvas id="responseTimeTrendChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-5">
+      <div class="card border-0 shadow-sm h-100 p-3">
+        <h6 class="fw-bold text-dark mb-3"><i class="bi bi-cpu me-2 text-success"></i>Performance by Module</h6>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0 fs-7">
+            <thead class="bg-light text-muted">
+              <tr><th>Module</th><th>Response Time</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+              {% for mod in metrics.performance_by_module %}
+              <tr>
+                <td class="fw-bold text-dark">{{ mod.module }}</td>
+                <td class="fw-bold text-primary">{{ mod.response_time }}</td>
+                <td><span class="badge bg-success-subtle text-success">{{ mod.status }}</span></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 2: Load Testing Results & API Testing Summary & Database Performance (Matches Slide 15) -->
+  <div class="row g-4 mb-4">
+    <div class="col-lg-5">
+      <div class="card border-0 shadow-sm h-100 p-3">
+        <h6 class="fw-bold text-dark mb-3"><i class="bi bi-speedometer2 me-2 text-warning"></i>Load Testing Results</h6>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0 fs-7">
+            <thead class="bg-light text-muted">
+              <tr><th>Scenario</th><th>Users</th><th>Reqs</th><th>Avg Resp</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+              {% for lt in metrics.load_testing_results %}
+              <tr>
+                <td class="fw-bold text-dark">{{ lt.scenario }}</td>
+                <td>{{ lt.users }}</td>
+                <td>{{ lt.requests }}</td>
+                <td class="fw-bold text-primary">{{ lt.avg_response }}</td>
+                <td><span class="badge bg-success">{{ lt.status }}</span></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-3">
+      <div class="card border-0 shadow-sm h-100 p-3 text-center">
+        <h6 class="fw-bold text-dark mb-3"><i class="bi bi-check-circle me-2 text-info"></i>API Testing Summary</h6>
+        <div style="height: 180px;" class="d-flex justify-content-center">
+          <canvas id="apiTestingSummaryChart"></canvas>
+        </div>
+        <div class="mt-2 text-muted fs-8">Total APIs: {{ metrics.api_testing_summary.total }} | Passed: {{ metrics.api_testing_summary.passed }} ({{ metrics.api_testing_summary.passed_pct }}%)</div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm h-100 p-3">
+        <h6 class="fw-bold text-dark mb-3"><i class="bi bi-database me-2 text-danger"></i>Database Performance</h6>
+        <div class="row g-2 text-center fs-7">
+          <div class="col-6">
+            <div class="bg-light p-2 rounded">
+              <span class="text-muted fs-8">Query Response Time</span>
+              <div class="fs-4 fw-bold text-success" id="cardDbSpeed">{{ metrics.database_performance.query_response_time }}</div>
+              <span class="text-success fs-8">Excellent</span>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="bg-light p-2 rounded">
+              <span class="text-muted fs-8">Slow Queries</span>
+              <div class="fs-4 fw-bold text-warning">{{ metrics.database_performance.slow_queries }}</div>
+              <span class="text-warning fs-8">Good</span>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="bg-light p-2 rounded">
+              <span class="text-muted fs-8">Active Connections</span>
+              <div class="fs-5 fw-bold text-dark">{{ metrics.database_performance.active_connections }}</div>
+              <span class="text-muted fs-8">Optimal</span>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="bg-light p-2 rounded">
+              <span class="text-muted fs-8">Cache Hit Ratio</span>
+              <div class="fs-5 fw-bold text-success">{{ metrics.database_performance.cache_hit_ratio }}</div>
+              <span class="text-success fs-8">Excellent</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 3: Performance Optimization Recommendations (Matches Slide 15) -->
+  <div class="card border-0 shadow-sm p-4 mb-4">
+    <h6 class="fw-bold text-dark mb-3"><i class="bi bi-lightning-charge-fill me-2 text-primary"></i>Performance Optimization Recommendations</h6>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0 fs-7">
+        <thead class="bg-light text-muted">
+          <tr><th>Recommendation</th><th class="text-end">Impact Level</th></tr>
+        </thead>
+        <tbody>
+          {% for rec in metrics.optimization_recommendations %}
+          <tr>
+            <td class="fw-semibold text-dark"><i class="bi bi-arrow-right-circle me-2 text-primary"></i>{{ rec.recommendation }}</td>
+            <td class="text-end"><span class="badge {{ rec.badge }} px-3 py-1">{{ rec.impact }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Chart 1: Response Time Trend
+new Chart(document.getElementById('responseTimeTrendChart'), {
+  type: 'line',
+  data: {
+    labels: {{ metrics.response_time_trend.labels|tojson }},
+    datasets: [{
+      label: 'Average Response Time (ms)',
+      data: {{ metrics.response_time_trend.data|tojson }},
+      borderColor: '#0d6efd',
+      backgroundColor: 'rgba(13, 110, 253, 0.1)',
+      fill: true,
+      tension: 0.3
+    }]
+  },
+  options: { responsive: true, maintainAspectRatio: false }
+});
+
+// Chart 2: API Testing Summary
+new Chart(document.getElementById('apiTestingSummaryChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Passed', 'Failed', 'Warning', 'Not Tested'],
+    datasets: [{
+      data: [
+        {{ metrics.api_testing_summary.passed }},
+        {{ metrics.api_testing_summary.failed }},
+        {{ metrics.api_testing_summary.warning }},
+        {{ metrics.api_testing_summary.not_tested }}
+      ],
+      backgroundColor: ['#198754', '#dc3545', '#ffc107', '#6c757d']
+    }]
+  },
+  options: { responsive: true, maintainAspectRatio: false }
+});
+
+function runLivePerformanceTest() {
+  fetch('/testing-performance/run-test', { method: 'POST' })
+    .then(res => res.json())
+    .then(data => {
+      if (data.status === 'success') {
+        document.getElementById('cardDbSpeed').innerText = data.metrics.db_query_time;
+        alert("Performance test complete! Database query time measured: " + data.metrics.db_query_time);
+      }
+    })
+    .catch(err => console.error(err));
+}
+</script>
+{% endblock %}

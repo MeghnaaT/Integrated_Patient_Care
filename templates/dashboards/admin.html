@@ -127,7 +127,7 @@
       ('bi-person-plus',       'primary',   'Add Patient',       url_for('patient.add_patient_view')),
       ('bi-person-badge',      'success',   'Manage Doctors',    url_for('doctor.list_doctors_view')),
       ('bi-calendar-plus',     'info',      'New Appointment',   url_for('appointment.book_appointment_view')),
-      ('bi-heart-pulse-fill',  'warning',   'Manage Nurses',     url_for('nurse.list_nurses_view')),
+      ('bi-star-fill',         'warning',   'Patient Feedback',  url_for('feedback.admin_feedback')),
     ] %}
     {% for icon, color, label, href in quick_links %}
     <div class="col-sm-6 col-md-3">

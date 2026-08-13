@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-4">
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="fw-bold mb-0 text-dark"><i class="bi bi-star-fill text-warning me-2"></i>My Submitted Feedback</h2>
+      <p class="text-muted mb-0">Track your submitted ratings and comments</p>
+    </div>
+    <a href="{{ url_for('feedback.submit_feedback') }}" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">
+      <i class="bi bi-plus-circle me-1"></i>New Feedback
+    </a>
+  </div>
+
+  <div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0 fs-7">
+        <thead class="bg-light text-muted">
+          <tr>
+            <th>Code</th>
+            <th>Date</th>
+            <th>Category</th>
+            <th>Rating</th>
+            <th>Doctor / Department</th>
+            <th>Comments</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for f in feedbacks %}
+          <tr>
+            <td class="fw-bold text-primary">{{ f.feedback_code }}</td>
+            <td>{{ f.created_date.strftime('%Y-%m-%d') }}</td>
+            <td><span class="badge bg-light text-dark border">{{ f.service_type }}</span></td>
+            <td>
+              <span class="text-warning fw-bold fs-6">
+                {% for i in range(f.rating) %}<i class="bi bi-star-fill"></i>{% endfor %}
+              </span>
+            </td>
+            <td>
+              {% if f.doctor %}
+                Dr. {{ f.doctor.full_name }}
+              {% elif f.department %}
+                {{ f.department.name }}
+              {% else %}
+                General
+              {% endif %}
+            </td>
+            <td>{{ f.comment or '-' }}</td>
+            <td><span class="badge bg-success-subtle text-success">{{ f.status }}</span></td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="7" class="text-center py-4 text-muted">No feedback records submitted yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

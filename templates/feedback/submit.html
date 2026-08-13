@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-4" style="max-width: 720px;">
+
+  <!-- Header -->
+  <div class="card border-0 shadow-sm bg-primary text-white p-4 mb-4 rounded-3">
+    <div class="d-flex align-items-center justify-content-between">
+      <div>
+        <h3 class="fw-bold mb-1"><i class="bi bi-star-fill text-warning me-2"></i>Patient Feedback & Satisfaction</h3>
+        <p class="mb-0 text-white-50">Share your experience to help us improve hospital services, clinical care, and patient satisfaction.</p>
+      </div>
+      <i class="bi bi-chat-square-quote-fill display-5 text-white-50"></i>
+    </div>
+  </div>
+
+  <!-- Feedback Form Card -->
+  <div class="card border-0 shadow-sm p-4">
+    <form method="POST" action="{{ url_for('feedback.submit_feedback') }}" novalidate>
+      {{ form.hidden_tag() }}
+
+      <div class="mb-3">
+        <label class="form-label fw-bold text-dark" for="service_type">1. Rating Category / Service Type</label>
+        {{ form.service_type(class="form-select border-primary-subtle py-2") }}
+        {% if form.service_type.errors %}
+          <div class="text-danger small mt-1">{{ form.service_type.errors[0] }}</div>
+        {% endif %}
+      </div>
+
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <label class="form-label fw-semibold text-dark" for="doctor_id">2. Consulting Doctor (Optional)</label>
+          {{ form.doctor_id(class="form-select") }}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold text-dark" for="department_id">3. Department (Optional)</label>
+          {{ form.department_id(class="form-select") }}
+        </div>
+      </div>
+
+      <!-- Star Rating Controls -->
+      <div class="mb-4 text-center bg-light p-3 rounded">
+        <label class="form-label fw-bold text-dark d-block mb-2">4. Overall Satisfaction Rating (1 to 5 Stars)</label>
+        <div class="d-flex justify-content-center gap-2 mb-2 fs-2 text-warning" id="starRatingContainer">
+          <i class="bi bi-star-fill cursor-pointer star-item" data-val="1"></i>
+          <i class="bi bi-star-fill cursor-pointer star-item" data-val="2"></i>
+          <i class="bi bi-star-fill cursor-pointer star-item" data-val="3"></i>
+          <i class="bi bi-star-fill cursor-pointer star-item" data-val="4"></i>
+          <i class="bi bi-star-fill cursor-pointer star-item" data-val="5"></i>
+        </div>
+        {{ form.rating(class="form-select d-none", id="ratingSelect") }}
+        <span class="badge bg-primary fs-7" id="ratingText">5 Stars - Excellent</span>
+      </div>
+
+      <div class="mb-4">
+        <label class="form-label fw-bold text-dark" for="comment">5. Additional Comments & Feedback</label>
+        {{ form.comment(class="form-control", rows="4", placeholder="Please tell us about your experience, doctor care, hospital cleanliness, or pharmacy speed...") }}
+      </div>
+
+      <div class="d-flex justify-content-between align-items-center">
+        <a href="{{ url_for('feedback.my_feedback') }}" class="btn btn-outline-secondary px-4 rounded-pill">
+          <i class="bi bi-clock-history me-1"></i>View My History
+        </a>
+        <button type="submit" class="btn btn-primary px-5 py-2 fw-bold rounded-pill shadow-sm">
+          <i class="bi bi-send-fill me-1"></i>Submit Feedback
+        </button>
+      </div>
+
+    </form>
+  </div>
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const stars = document.querySelectorAll('.star-item');
+  const ratingSelect = document.getElementById('ratingSelect');
+  const ratingText = document.getElementById('ratingText');
+
+  const texts = {
+    1: '1 Star - Very Poor',
+    2: '2 Stars - Poor',
+    3: '3 Stars - Average',
+    4: '4 Stars - Good',
+    5: '5 Stars - Excellent'
+  };
+
+  function setRating(val) {
+    ratingSelect.value = val;
+    ratingText.innerText = texts[val];
+    stars.forEach((s, idx) => {
+      if (idx < val) {
+        s.classList.remove('bi-star', 'text-muted');
+        s.classList.add('bi-star-fill', 'text-warning');
+      } else {
+        s.classList.remove('bi-star-fill', 'text-warning');
+        s.classList.add('bi-star', 'text-muted');
+      }
+    });
+  }
+
+  stars.forEach(s => {
+    s.addEventListener('click', () => {
+      setRating(parseInt(s.getAttribute('data-val')));
+    });
+  });
+
+  setRating(5);
+});
+</script>
+{% endblock %}

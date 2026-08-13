@@ -80,6 +80,16 @@ def create_app(config_name: str = 'default') -> Flask:
     from routes.lab import laboratory_bp
     from routes.medical_history import medical_history_bp
 
+    from routes.pharmacy import pharmacy_bp
+    from routes.billing import billing_bp
+    from routes.api import api_bp
+    from routes.api_dashboard import api_dashboard_bp
+    from routes.notification import notification_bp
+    from routes.dashboard_analytics import dashboard_analytics_bp
+    from routes.system_integration import system_integration_bp
+    from routes.testing_performance import testing_performance_bp
+    from routes.feedback import feedback_bp
+
     app.register_blueprint(dashboard_bp)                                 # / and /dashboard
     app.register_blueprint(auth_bp,            url_prefix='/auth')            # /auth/*
     app.register_blueprint(admin_bp,           url_prefix='/admin')           # /admin/*
@@ -93,6 +103,15 @@ def create_app(config_name: str = 'default') -> Flask:
     app.register_blueprint(prescription_bp,    url_prefix='/prescriptions')   # /prescriptions/*
     app.register_blueprint(laboratory_bp,      url_prefix='/laboratory')      # /laboratory/*
     app.register_blueprint(medical_history_bp, url_prefix='/medical-history') # /medical-history/*
+    app.register_blueprint(pharmacy_bp,        url_prefix='/pharmacy')        # /pharmacy/*
+    app.register_blueprint(billing_bp,         url_prefix='/billing')         # /billing/*
+    app.register_blueprint(api_bp,             url_prefix='/api/v1')         # /api/v1/*
+    app.register_blueprint(api_dashboard_bp)                                  # /api-management
+    app.register_blueprint(notification_bp,    url_prefix='/notifications')   # /notifications/*
+    app.register_blueprint(dashboard_analytics_bp)                             # /dashboard-overview
+    app.register_blueprint(system_integration_bp)                            # /system-integration & /milestone3-summary
+    app.register_blueprint(testing_performance_bp)                            # /testing-performance
+    app.register_blueprint(feedback_bp,               url_prefix='/feedback')        # /feedback/*
 
 
     # -------------------------------------------------------------------------

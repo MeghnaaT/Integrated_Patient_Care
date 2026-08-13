@@ -3,7 +3,7 @@
 [![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/)
 [![Flask Version](https://img.shields.io/badge/flask-3.0%2B-green.svg)](https://flask.palletsprojects.com/)
 [![Database](https://img.shields.io/badge/database-MySQL%208.0%2B-orange.svg)](https://www.mysql.com/)
-[![License](https://img.shields.io/badge/license-HIPAA--Aligned-red.svg)]()
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Welcome to the **Integrated Patient Care Management System (IPCMS)**. This is a comprehensive, production-ready web application built to streamline operations across modern clinical environments. The system facilitates role-based access for Administrators, Doctors, Nurses, and Patients, ensuring secure demographics indexing, appointment scheduling, and Electronic Health Records (EHR) management.
 
@@ -56,3 +56,9 @@ Run `python setup_database.py` to compile the schema and seed the following defa
 * **Doctor Account:** `doctor@ipcms.com` / password `doctor123`
 * **Nurse Account:** `nurse@ipcms.com` / password `nurse123`
 * **Patient Account:** `patient@ipcms.com` / password `patient123`
+
+---
+
+## 4. License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
