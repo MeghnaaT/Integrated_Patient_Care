@@ -119,6 +119,14 @@ def admin_reports_hub():
     search_query = request.args.get('q', '')
     page = request.args.get('page', 1, type=int)
 
+    # Restrict Doctor & Nurse from accessing financial / executive admin reports
+    admin_only_reports = {'billing', 'doctor_performance', 'department', 'monthly', 'pharmacy', 'notification'}
+    if current_user.role.name in ['Doctor', 'Nurse'] and report_type in admin_only_reports:
+        abort(403)
+
+    if current_user.role.name == 'Doctor':
+        doctor_id = current_user.id
+
     start_date = datetime.datetime.strptime(start_date_str, '%Y-%m-%d').date() if start_date_str else None
     end_date = datetime.datetime.strptime(end_date_str, '%Y-%m-%d').date() if end_date_str else None
 

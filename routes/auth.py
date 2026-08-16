@@ -23,9 +23,13 @@ auth_bp = Blueprint('auth', __name__)
 # ---------------------------------------------------------------------------
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
-    # Redirect already-authenticated users straight to their dashboard
-    if current_user.is_authenticated:
+    # Only redirect already-authenticated users on GET requests
+    if request.method == 'GET' and current_user.is_authenticated:
         return redirect(url_for('dashboard.dashboard'))
+
+    # If POSTing new login credentials while authenticated, logout previous session
+    if request.method == 'POST' and current_user.is_authenticated:
+        logout_user()
 
     form = LoginForm()
 
@@ -35,8 +39,22 @@ def login():
         if user and user.is_active and check_password_hash(user.password_hash, form.password.data):
             login_user(user, remember=form.remember_me.data)
             flash(f'Welcome back, {user.username}!', 'success')
-            # Honour the ?next= redirect if it is safe
+            
+            # Honour the ?next= redirect only if it is safe and role-compatible
             next_page = request.args.get('next')
+            if next_page:
+                from urllib.parse import urlparse
+                netloc = urlparse(next_page).netloc
+                if netloc:
+                    next_page = None  # Block external redirects
+                elif user.role.name != 'Admin' and (
+                    next_page.startswith('/admin') or 
+                    next_page.startswith('/system-integration') or 
+                    next_page.startswith('/testing-performance') or 
+                    next_page.startswith('/dashboard-overview')
+                ):
+                    next_page = None  # Block non-admins from being redirected to admin-only pages
+
             return redirect(next_page or url_for('dashboard.dashboard'))
 
         flash('Invalid email or password. Please try again.', 'danger')

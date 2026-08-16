@@ -227,7 +227,7 @@ def execute_complete_patient_workflow() -> Dict[str, Any]:
     # Step 11: Patient Feedback Submission
     # -------------------------------------------------------------------------
     fbk = Feedback(
-        feedback_code=f"FBK{int(time.time()) % 10000:04d}",
+        feedback_code=f"FBK_{int(time.time()*1000)}_{datetime.datetime.now().microsecond}",
         patient_id=patient.id,
         doctor_id=doctor.id,
         consultation_id=consult.id,

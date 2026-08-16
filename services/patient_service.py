@@ -115,8 +115,22 @@ def get_patient(patient_id: int) -> Patient:
 
 
 # ---------------------------------------------------------------------------
-# List / Search / Pagination
+# List / Search / Pagination & Doctor Scoping
 # ---------------------------------------------------------------------------
+
+def get_doctor_associated_patient_ids(doctor_id: int) -> set:
+    """Return set of patient IDs associated with a specific Doctor through appointments, consultations, or prescriptions."""
+    from models.appointment import Appointment
+    from models.consultation import Consultation
+    from models.prescription import Prescription
+
+    appt_pids = db.session.query(Appointment.patient_id).filter(Appointment.doctor_id == doctor_id).all()
+    cons_pids = db.session.query(Consultation.patient_id).filter(Consultation.doctor_id == doctor_id).all()
+    pres_pids = db.session.query(Prescription.patient_id).filter(Prescription.doctor_id == doctor_id).all()
+
+    pids = set([p[0] for p in appt_pids if p[0]] + [p[0] for p in cons_pids if p[0]] + [p[0] for p in pres_pids if p[0]])
+    return pids
+
 
 def list_patients(
     page: int = 1,
@@ -124,12 +138,14 @@ def list_patients(
     sort_by: str = "last_name",
     sort_dir: str = "asc",
     search_term: Optional[str] = None,
+    doctor_id: Optional[int] = None,
 ) -> Tuple[List[Patient], int]:
     """Return a page of patients and the total count.
 
     * ``sort_by`` is limited to a whitelist of safe column names.
     * ``search_term`` performs a case‑insensitive LIKE on first_name, last_name,
       email and phone_number.
+    * ``doctor_id`` scopes results to patients associated with the specified Doctor.
     """
     # Whitelist allowed sort columns to prevent SQL injection via ORM
     allowed_sorts = {"first_name", "last_name", "age", "registered_on"}
@@ -143,6 +159,14 @@ def list_patients(
 
     from models.user import User
     query = Patient.query.join(User).filter(User.is_active.is_(True))
+
+    if doctor_id is not None:
+        doctor_pids = get_doctor_associated_patient_ids(doctor_id)
+        if doctor_pids:
+            query = query.filter(Patient.id.in_(list(doctor_pids)))
+        else:
+            query = query.filter(Patient.id == -1)  # No patients associated
+
     if search_term:
         like = f"%{search_term}%"
         query = query.filter(

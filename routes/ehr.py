@@ -21,11 +21,17 @@ ehr_bp = Blueprint('ehr', __name__)
 @login_required
 def view_ehr(patient_id: int):
     """Display Electronic Health Record dashboard for a patient (matches Slide 6)."""
-    patient = Patient.query.get_or_404(patient_id)
-
     # Patients can only view their own EHR
-    if current_user.role.name == 'Patient' and current_user.id != patient.id:
+    if current_user.role.name == 'Patient' and current_user.id != patient_id:
         abort(403)
+
+    if current_user.role.name == 'Doctor':
+        from services.patient_service import get_doctor_associated_patient_ids
+        allowed_pids = get_doctor_associated_patient_ids(current_user.id)
+        if patient_id not in allowed_pids:
+            abort(403)
+
+    patient = Patient.query.get_or_404(patient_id)
 
     ehr = get_or_create_ehr_detail(patient.id)
     allergies = get_patient_allergies(patient.id)
@@ -54,6 +60,12 @@ def view_ehr(patient_id: int):
 @role_required('Admin', 'Doctor', 'Nurse')
 def edit_ehr(patient_id: int):
     """Edit patient vitals and health summary."""
+    if current_user.role.name == 'Doctor':
+        from services.patient_service import get_doctor_associated_patient_ids
+        allowed_pids = get_doctor_associated_patient_ids(current_user.id)
+        if patient_id not in allowed_pids:
+            abort(403)
+
     patient = Patient.query.get_or_404(patient_id)
     ehr = get_or_create_ehr_detail(patient.id)
     form = EHRDetailForm(obj=ehr)

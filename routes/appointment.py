@@ -118,11 +118,32 @@ def book_appointment_view():
                 return redirect(url_for('patient.dashboard'))
             return redirect(url_for('appointment.list_appointments_view'))
 
-    # Set default date to today
+    # Set default date to today and pre-select doctor if provided
     if request.method == 'GET':
         form.appointment_date.data = datetime.date.today()
+        doc_arg = request.args.get('doctor_id', type=int)
+        if doc_arg:
+            form.doctor_id.data = doc_arg
 
     return render_template('appointments/book_edit.html', form=form, title='Book Appointment', action='book')
+
+
+@appointment_bp.route('/my-appointments')
+@login_required
+@role_required('Patient')
+def my_appointments():
+    """Patient's dedicated appointment history list."""
+    appts = (
+        Appointment.query
+        .filter_by(patient_id=current_user.id)
+        .order_by(Appointment.appointment_date.desc(), Appointment.appointment_time.desc())
+        .all()
+    )
+    context = {
+        'title': 'My Appointments',
+        'appointments': appts
+    }
+    return render_template('appointments/my_appointments.html', **context)
 
 
 @appointment_bp.route('/edit/<int:appointment_id>', methods=['GET', 'POST'])
@@ -186,6 +207,10 @@ def doctor_schedule_view(doctor_id):
             target_date = datetime.date.today()
     else:
         target_date = datetime.date.today()
+
+    # IDOR Guard: A consulting doctor can only view their own schedule
+    if current_user.role.name == 'Doctor' and current_user.id != doctor_id:
+        abort(403)
 
     doctor = Doctor.query.get_or_404(doctor_id)
     

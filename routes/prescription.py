@@ -17,7 +17,12 @@ from services.prescription_service import create_prescription, get_prescription_
 prescription_bp = Blueprint('prescription', __name__)
 
 def populate_choices(form):
-    patients = Patient.query.all()
+    from services.patient_service import get_doctor_associated_patient_ids
+    if current_user.is_authenticated and current_user.role.name == 'Doctor':
+        allowed_pids = get_doctor_associated_patient_ids(current_user.id)
+        patients = Patient.query.filter(Patient.id.in_(list(allowed_pids) if allowed_pids else [-1])).all()
+    else:
+        patients = Patient.query.all()
     doctors = Doctor.query.all()
     form.patient_id.choices = [(p.id, f"{p.full_name} (PAT100{p.id})") for p in patients]
     form.doctor_id.choices = [(d.id, f"Dr. {d.first_name} {d.last_name}") for d in doctors]
@@ -27,6 +32,7 @@ def populate_choices(form):
 @role_required('Admin', 'Doctor')
 def add_prescription():
     """Create a digital prescription."""
+    from services.patient_service import get_doctor_associated_patient_ids
     form = PrescriptionForm()
     populate_choices(form)
 
@@ -39,7 +45,19 @@ def add_prescription():
             form.doctor_id.data = current_user.id
         form.prescription_date.data = datetime.date.today()
 
+    if request.method == 'POST' and current_user.role.name == 'Doctor':
+        posted_pid = request.form.get('patient_id', type=int)
+        if posted_pid:
+            allowed_pids = get_doctor_associated_patient_ids(current_user.id)
+            if posted_pid not in allowed_pids:
+                abort(403)
+
     if form.validate_on_submit():
+        if current_user.role.name == 'Doctor':
+            allowed_pids = get_doctor_associated_patient_ids(current_user.id)
+            if form.patient_id.data not in allowed_pids:
+                abort(403)
+
         items_data = [
             {
                 'medicine_name': form.medicine_name_1.data,
@@ -85,6 +103,12 @@ def view_prescription(id: int):
     if current_user.role.name == 'Patient' and current_user.id != prescription.patient_id:
         abort(403)
 
+    if current_user.role.name == 'Doctor' and current_user.id != prescription.doctor_id:
+        from services.patient_service import get_doctor_associated_patient_ids
+        allowed_pids = get_doctor_associated_patient_ids(current_user.id)
+        if prescription.patient_id not in allowed_pids:
+            abort(403)
+
     context = {
         'title': f'Prescription #{prescription.id}',
         'prescription': prescription
@@ -95,8 +119,11 @@ def view_prescription(id: int):
 @login_required
 def list_prescriptions():
     """List prescriptions depending on user role."""
+    from models.prescription import Prescription
     if current_user.role.name == 'Patient':
         prescriptions = get_prescriptions_by_patient(current_user.id)
+    elif current_user.role.name == 'Doctor':
+        prescriptions = Prescription.query.filter_by(doctor_id=current_user.id).order_by(Prescription.prescription_date.desc()).all()
     else:
         prescriptions = get_recent_prescriptions(limit=50)
 

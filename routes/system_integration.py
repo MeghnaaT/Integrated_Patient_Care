@@ -11,7 +11,7 @@ system_integration_bp = Blueprint('system_integration', __name__)
 
 @system_integration_bp.route('/system-integration', methods=['GET'])
 @login_required
-@role_required('Admin', 'Doctor', 'Nurse', 'Pharmacist')
+@role_required('Admin')
 def integration_testing():
     """System Integration & Performance Testing Dashboard matching Slide 36 mockup."""
     return render_template(
@@ -22,7 +22,7 @@ def integration_testing():
 
 @system_integration_bp.route('/system-integration/run-workflow', methods=['POST', 'GET'])
 @login_required
-@role_required('Admin', 'Doctor', 'Nurse', 'Pharmacist')
+@role_required('Admin')
 def run_integration_workflow():
     """Executes the complete 12-step end-to-end patient workflow and returns JSON test results."""
     try:
@@ -34,7 +34,7 @@ def run_integration_workflow():
 
 @system_integration_bp.route('/milestone3-summary', methods=['GET'])
 @login_required
-@role_required('Admin', 'Doctor', 'Nurse', 'Pharmacist')
+@role_required('Admin')
 def milestone3_summary():
     """Milestone 3 System Integrated Dashboard matching Slide 37 mockup."""
     return render_template(

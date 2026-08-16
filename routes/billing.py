@@ -4,7 +4,7 @@
 # URL Prefix: /billing
 # =============================================================================
 
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, abort
 from flask_login import login_required, current_user
 from utils.decorators import role_required
 from forms.billing_forms import PatientBillingForm
@@ -84,9 +84,26 @@ def view_invoice(bill_id):
     bill = get_bill_by_id_or_number(str(bill_id))
     if not bill:
         flash("Invoice not found.", "danger")
-        return redirect(url_for('billing.patient_billing'))
+        return redirect(url_for('billing.my_invoices') if current_user.role.name == 'Patient' else url_for('billing.patient_billing'))
+
+    # IDOR Guard: Patients can only view their own invoices
+    if current_user.role.name == 'Patient' and current_user.id != bill.patient_id:
+        abort(403)
 
     return render_template('billing/invoice.html', bill=bill, title=f"Invoice {bill.bill_number}")
+
+
+@billing_bp.route('/my-invoices', methods=['GET'])
+@login_required
+@role_required('Patient')
+def my_invoices():
+    """Patient's dedicated billing & invoices history."""
+    invoices = Bill.query.filter_by(patient_id=current_user.id).order_by(Bill.created_at.desc()).all()
+    context = {
+        'title': 'My Invoices & Billing',
+        'invoices': invoices
+    }
+    return render_template('billing/my_invoices.html', **context)
 
 
 @billing_bp.route('/history', methods=['GET'])

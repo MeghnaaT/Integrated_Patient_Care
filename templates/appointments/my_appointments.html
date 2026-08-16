@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+
+  <!-- Header -->
+  <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+    <div>
+      <h2 class="fw-bold mb-0 text-dark"><i class="bi bi-calendar-check me-2 text-primary"></i>My Appointments</h2>
+      <p class="text-muted small mb-0">View, track, and manage your scheduled consultations and medical appointments</p>
+    </div>
+    <a href="{{ url_for('appointment.book_appointment_view') }}" class="btn btn-primary px-3 py-2 fw-semibold">
+      <i class="bi bi-calendar-plus me-1"></i>Book New Appointment
+    </a>
+  </div>
+
+  <!-- Appointments List Card -->
+  <div class="card border-0 shadow-sm ipcms-stat-card">
+    <div class="card-body p-0">
+      {% if appointments %}
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th scope="col" class="ps-4">Appt ID</th>
+              <th scope="col">Doctor</th>
+              <th scope="col">Department</th>
+              <th scope="col">Date</th>
+              <th scope="col">Time</th>
+              <th scope="col">Reason / Notes</th>
+              <th scope="col">Status</th>
+              <th scope="col" class="text-end pe-4">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for appt in appointments %}
+            <tr>
+              <td class="ps-4 text-muted small fw-semibold">#APP-{{ appt.id }}</td>
+              <td>
+                {% if appt.doctor %}
+                  <a href="{{ url_for('doctor.view_doctor_view', doctor_id=appt.doctor.id) }}" class="fw-bold text-decoration-none text-dark">
+                    Dr. {{ appt.doctor.full_name }}
+                  </a>
+                {% else %}
+                  <span class="text-muted">Unassigned</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if appt.doctor and appt.doctor.department %}
+                  <span class="badge bg-primary-subtle text-primary">{{ appt.doctor.department.name }}</span>
+                {% else %}
+                  <span class="badge bg-secondary-subtle text-secondary">General</span>
+                {% endif %}
+              </td>
+              <td class="fw-semibold">{{ appt.appointment_date.strftime('%d %b %Y') }}</td>
+              <td>
+                <span class="badge bg-light text-dark border">
+                  <i class="bi bi-clock me-1"></i>{{ appt.appointment_time.strftime('%I:%M %p') }}
+                </span>
+              </td>
+              <td class="small text-muted">{{ appt.reason or 'Routine Consultation' }}</td>
+              <td>
+                {% if appt.status == 'Confirmed' %}
+                  <span class="badge bg-success-subtle text-success px-2 py-1"><i class="bi bi-check-circle me-1"></i>Confirmed</span>
+                {% elif appt.status == 'Pending' %}
+                  <span class="badge bg-warning-subtle text-warning px-2 py-1"><i class="bi bi-hourglass-split me-1"></i>Pending</span>
+                {% elif appt.status == 'Completed' %}
+                  <span class="badge bg-info-subtle text-info px-2 py-1"><i class="bi bi-check-all me-1"></i>Completed</span>
+                {% elif appt.status == 'Cancelled' %}
+                  <span class="badge bg-danger-subtle text-danger px-2 py-1"><i class="bi bi-x-circle me-1"></i>Cancelled</span>
+                {% else %}
+                  <span class="badge bg-secondary px-2 py-1">{{ appt.status }}</span>
+                {% endif %}
+              </td>
+              <td class="text-end pe-4">
+                {% if appt.status not in ['Cancelled', 'Completed'] %}
+                <form action="{{ url_for('appointment.cancel_appointment_view', appointment_id=appt.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to cancel this appointment?');">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="btn btn-outline-danger btn-sm" title="Cancel Appointment">
+                    <i class="bi bi-x-lg me-1"></i>Cancel
+                  </button>
+                </form>
+                {% else %}
+                <span class="text-muted small">N/A</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="text-center py-5 text-muted">
+        <i class="bi bi-calendar-x fs-1 d-block mb-3 text-secondary"></i>
+        <h5 class="fw-bold">No Appointments Found</h5>
+        <p class="small mb-3">You haven't scheduled any appointments yet.</p>
+        <a href="{{ url_for('appointment.book_appointment_view') }}" class="btn btn-primary btn-sm fw-semibold">
+          <i class="bi bi-calendar-plus me-1"></i>Schedule First Appointment
+        </a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

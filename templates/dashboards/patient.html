@@ -46,78 +46,151 @@
   {% endif %}
 
   <!-- Stats Cards -->
-  <div class="row g-4 mb-4">
-    <!-- Today's Appointments -->
-    <div class="col-md-4">
-      <div class="card ipcms-stat-card border-0 shadow-sm">
-        <div class="card-body d-flex align-items-center gap-3">
-          <div class="ipcms-stat-icon bg-danger-subtle text-danger">
-            <i class="bi bi-calendar-check fs-3"></i>
-          </div>
-          <div>
-            <p class="text-muted small mb-0 fw-semibold text-uppercase tracking-wide">Today's Appointments</p>
-            <h3 class="fw-bold mb-0 text-dark">{{ today_appts }}</h3>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Total Appointments -->
-    <div class="col-md-4">
-      <div class="card ipcms-stat-card border-0 shadow-sm">
-        <div class="card-body d-flex align-items-center gap-3">
-          <div class="ipcms-stat-icon bg-info-subtle text-info">
-            <i class="bi bi-calendar-range-fill fs-3"></i>
-          </div>
-          <div>
-            <p class="text-muted small mb-0 fw-semibold text-uppercase tracking-wide">Total Booked Sessions</p>
-            <h3 class="fw-bold mb-0 text-dark">{{ total_appts }}</h3>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Medical Records Count -->
-    <div class="col-md-4">
-      <div class="card ipcms-stat-card border-0 shadow-sm">
-        <div class="card-body d-flex align-items-center gap-3">
-          <div class="ipcms-stat-icon bg-success-subtle text-success">
-            <i class="bi bi-file-earmark-medical-fill fs-3"></i>
-          </div>
-          <div>
-            <p class="text-muted small mb-0 fw-semibold text-uppercase tracking-wide">Medical Records</p>
-            <h3 class="fw-bold mb-0 text-dark">{{ total_records }}</h3>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Navigation / Quick Actions -->
   <div class="row g-3 mb-4">
-    <div class="col-md-6">
-      <a href="{{ url_for('appointment.book_appointment_view') }}" class="card ipcms-quick-card border-0 shadow-sm text-decoration-none h-100">
-        <div class="card-body d-flex align-items-center gap-3">
-          <div class="ipcms-stat-icon bg-info-subtle text-info">
-            <i class="bi bi-calendar-plus fs-4"></i>
+    <!-- Total Appointments -->
+    <div class="col-sm-6 col-md-4 col-xl-2">
+      <a href="{{ url_for('appointment.my_appointments') }}" class="card ipcms-stat-card border-0 shadow-sm text-decoration-none h-100">
+        <div class="card-body p-3 d-flex align-items-center gap-3">
+          <div class="ipcms-stat-icon bg-info-subtle text-info flex-shrink-0" style="width: 44px; height: 44px; font-size: 1.2rem;">
+            <i class="bi bi-calendar-check"></i>
           </div>
           <div>
-            <h6 class="fw-bold text-dark mb-0">Book Appointment</h6>
-            <p class="small text-muted mb-0">Schedule a new consultation slot with our medical specialists</p>
+            <p class="text-muted xsmall mb-0 fw-semibold text-uppercase tracking-wide">Appointments</p>
+            <h4 class="fw-bold mb-0 text-dark">{{ total_appts }}</h4>
           </div>
         </div>
       </a>
     </div>
 
-    <div class="col-md-6">
-      <a href="{{ url_for('patient.edit_patient_view', patient_id=current_user.id) }}" class="card ipcms-quick-card border-0 shadow-sm text-decoration-none h-100">
-        <div class="card-body d-flex align-items-center gap-3">
-          <div class="ipcms-stat-icon bg-primary-subtle text-primary">
-            <i class="bi bi-person-gear fs-4"></i>
+    <!-- Medical Records Count -->
+    <div class="col-sm-6 col-md-4 col-xl-2">
+      <a href="{{ url_for('ehr.view_ehr', patient_id=current_user.id) }}" class="card ipcms-stat-card border-0 shadow-sm text-decoration-none h-100">
+        <div class="card-body p-3 d-flex align-items-center gap-3">
+          <div class="ipcms-stat-icon bg-success-subtle text-success flex-shrink-0" style="width: 44px; height: 44px; font-size: 1.2rem;">
+            <i class="bi bi-file-earmark-medical"></i>
           </div>
           <div>
-            <h6 class="fw-bold text-dark mb-0">Update Demographics</h6>
-            <p class="small text-muted mb-0">Modify contact number, address, and profile settings</p>
+            <p class="text-muted xsmall mb-0 fw-semibold text-uppercase tracking-wide">EHR &amp; Vitals</p>
+            <h4 class="fw-bold mb-0 text-dark">{{ total_records }}</h4>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <!-- Prescriptions Count -->
+    <div class="col-sm-6 col-md-4 col-xl-2">
+      <a href="{{ url_for('prescription.list_prescriptions') }}" class="card ipcms-stat-card border-0 shadow-sm text-decoration-none h-100">
+        <div class="card-body p-3 d-flex align-items-center gap-3">
+          <div class="ipcms-stat-icon bg-primary-subtle text-primary flex-shrink-0" style="width: 44px; height: 44px; font-size: 1.2rem;">
+            <i class="bi bi-capsule"></i>
+          </div>
+          <div>
+            <p class="text-muted xsmall mb-0 fw-semibold text-uppercase tracking-wide">Prescriptions</p>
+            <h4 class="fw-bold mb-0 text-dark">{{ total_prescriptions }}</h4>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <!-- Lab Reports Count -->
+    <div class="col-sm-6 col-md-4 col-xl-2">
+      <a href="{{ url_for('laboratory.list_reports') }}" class="card ipcms-stat-card border-0 shadow-sm text-decoration-none h-100">
+        <div class="card-body p-3 d-flex align-items-center gap-3">
+          <div class="ipcms-stat-icon bg-warning-subtle text-warning flex-shrink-0" style="width: 44px; height: 44px; font-size: 1.2rem;">
+            <i class="bi bi-flask"></i>
+          </div>
+          <div>
+            <p class="text-muted xsmall mb-0 fw-semibold text-uppercase tracking-wide">Lab Reports</p>
+            <h4 class="fw-bold mb-0 text-dark">{{ total_labs }}</h4>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <!-- Invoices Count -->
+    <div class="col-sm-6 col-md-4 col-xl-2">
+      <a href="{{ url_for('billing.my_invoices') }}" class="card ipcms-stat-card border-0 shadow-sm text-decoration-none h-100">
+        <div class="card-body p-3 d-flex align-items-center gap-3">
+          <div class="ipcms-stat-icon bg-purple-subtle text-purple flex-shrink-0" style="width: 44px; height: 44px; font-size: 1.2rem; background-color: #f3ebf9; color: #6f42c1;">
+            <i class="bi bi-credit-card"></i>
+          </div>
+          <div>
+            <p class="text-muted xsmall mb-0 fw-semibold text-uppercase tracking-wide">Invoices</p>
+            <h4 class="fw-bold mb-0 text-dark">{{ total_invoices }}</h4>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <!-- Feedback Count -->
+    <div class="col-sm-6 col-md-4 col-xl-2">
+      <a href="{{ url_for('feedback.my_feedback') }}" class="card ipcms-stat-card border-0 shadow-sm text-decoration-none h-100">
+        <div class="card-body p-3 d-flex align-items-center gap-3">
+          <div class="ipcms-stat-icon bg-danger-subtle text-danger flex-shrink-0" style="width: 44px; height: 44px; font-size: 1.2rem;">
+            <i class="bi bi-star"></i>
+          </div>
+          <div>
+            <p class="text-muted xsmall mb-0 fw-semibold text-uppercase tracking-wide">Feedback</p>
+            <h4 class="fw-bold mb-0 text-dark">{{ total_feedback }}</h4>
+          </div>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <!-- Navigation / Quick Actions Grid -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-3 col-sm-6">
+      <a href="{{ url_for('appointment.book_appointment_view') }}" class="card ipcms-quick-card border-0 shadow-sm text-decoration-none h-100">
+        <div class="card-body p-3 d-flex align-items-center gap-3">
+          <div class="ipcms-stat-icon bg-info-subtle text-info flex-shrink-0">
+            <i class="bi bi-calendar-plus fs-5"></i>
+          </div>
+          <div>
+            <h6 class="fw-bold text-dark mb-0">Book Appointment</h6>
+            <p class="xsmall text-muted mb-0">Schedule new consultation</p>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <div class="col-md-3 col-sm-6">
+      <a href="{{ url_for('doctor.list_doctors_view') }}" class="card ipcms-quick-card border-0 shadow-sm text-decoration-none h-100">
+        <div class="card-body p-3 d-flex align-items-center gap-3">
+          <div class="ipcms-stat-icon bg-success-subtle text-success flex-shrink-0">
+            <i class="bi bi-person-badge fs-5"></i>
+          </div>
+          <div>
+            <h6 class="fw-bold text-dark mb-0">Doctors Directory</h6>
+            <p class="xsmall text-muted mb-0">Browse consulting doctors</p>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <div class="col-md-3 col-sm-6">
+      <a href="{{ url_for('ehr.view_ehr', patient_id=current_user.id) }}" class="card ipcms-quick-card border-0 shadow-sm text-decoration-none h-100">
+        <div class="card-body p-3 d-flex align-items-center gap-3">
+          <div class="ipcms-stat-icon bg-primary-subtle text-primary flex-shrink-0">
+            <i class="bi bi-card-checklist fs-5"></i>
+          </div>
+          <div>
+            <h6 class="fw-bold text-dark mb-0">My Medical Record</h6>
+            <p class="xsmall text-muted mb-0">View EHR &amp; vitals history</p>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <div class="col-md-3 col-sm-6">
+      <a href="{{ url_for('feedback.submit_feedback') }}" class="card ipcms-quick-card border-0 shadow-sm text-decoration-none h-100">
+        <div class="card-body p-3 d-flex align-items-center gap-3">
+          <div class="ipcms-stat-icon bg-warning-subtle text-warning flex-shrink-0">
+            <i class="bi bi-star-half fs-5"></i>
+          </div>
+          <div>
+            <h6 class="fw-bold text-dark mb-0">Submit Feedback</h6>
+            <p class="xsmall text-muted mb-0">Rate service &amp; doctors</p>
           </div>
         </div>
       </a>

@@ -103,6 +103,10 @@ def dashboard():
     """Patient home — personal appointments, medical history, statistics, and chart data."""
     from models.patient import Patient
     from models.medical_record import MedicalRecord
+    from models.prescription import Prescription
+    from models.lab_report import LabReport
+    from models.billing import Bill
+    from models.feedback import Feedback
     import datetime
 
     patient = Patient.query.get(current_user.id)
@@ -124,6 +128,26 @@ def dashboard():
         .filter_by(patient_id=current_user.id)
         .count()
     )
+    total_prescriptions = (
+        Prescription.query
+        .filter_by(patient_id=current_user.id)
+        .count()
+    )
+    total_labs = (
+        LabReport.query
+        .filter_by(patient_id=current_user.id)
+        .count()
+    )
+    total_invoices = (
+        Bill.query
+        .filter_by(patient_id=current_user.id)
+        .count()
+    )
+    total_feedback = (
+        Feedback.query
+        .filter_by(patient_id=current_user.id)
+        .count()
+    )
 
     my_appointments = (
         Appointment.query
@@ -140,6 +164,30 @@ def dashboard():
         .all()
     )
 
+    my_prescriptions = (
+        Prescription.query
+        .filter_by(patient_id=current_user.id)
+        .order_by(Prescription.prescription_date.desc())
+        .limit(5)
+        .all()
+    )
+
+    my_invoices = (
+        Bill.query
+        .filter_by(patient_id=current_user.id)
+        .order_by(Bill.created_at.desc())
+        .limit(5)
+        .all()
+    )
+
+    my_feedback = (
+        Feedback.query
+        .filter_by(patient_id=current_user.id)
+        .order_by(Feedback.created_at.desc())
+        .limit(5)
+        .all()
+    )
+
     # Chart data: Patient's appointment status distribution
     status_counts = (
         db.session.query(Appointment.status, db.func.count(Appointment.id))
@@ -150,14 +198,21 @@ def dashboard():
     status_chart = {s: c for s, c in status_counts}
 
     context = {
-        'title':           'My Dashboard',
-        'patient':         patient,
-        'today_appts':     today_appts,
-        'total_appts':     total_appts,
-        'total_records':    total_records,
-        'my_appointments': my_appointments,
-        'my_records':      my_records,
-        'status_chart':    status_chart
+        'title':               'My Dashboard',
+        'patient':             patient,
+        'today_appts':         today_appts,
+        'total_appts':         total_appts,
+        'total_records':        total_records,
+        'total_prescriptions': total_prescriptions,
+        'total_labs':          total_labs,
+        'total_invoices':      total_invoices,
+        'total_feedback':      total_feedback,
+        'my_appointments':     my_appointments,
+        'my_records':          my_records,
+        'my_prescriptions':     my_prescriptions,
+        'my_invoices':         my_invoices,
+        'my_feedback':         my_feedback,
+        'status_chart':        status_chart
     }
     return render_template('dashboards/patient.html', **context)
 
@@ -177,19 +232,22 @@ def list_patients_view():
     sort = request.args.get('sort', 'last_name')
     direction = request.args.get('direction', 'asc')
 
+    doc_id = current_user.id if current_user.role.name == 'Doctor' else None
+
     per_page = 10
     patients, total = list_patients(
         page=page,
         per_page=per_page,
         sort_by=sort,
         sort_dir=direction,
-        search_term=q if q else None
+        search_term=q if q else None,
+        doctor_id=doc_id
     )
 
     total_pages = math.ceil(total / per_page)
 
     context = {
-        'title': 'Patient Directory',
+        'title': 'My Patients' if current_user.role.name == 'Doctor' else 'Patient Directory',
         'patients': patients,
         'page': page,
         'per_page': per_page,
@@ -281,10 +339,15 @@ def delete_patient_view(patient_id):
 @roles_required('Admin', 'Nurse', 'Doctor', 'Patient')
 def view_patient_view(patient_id):
     """View detailed demographics, medical records, and appointment history of a patient."""
-    from services.patient_service import get_patient
+    from services.patient_service import get_patient, get_doctor_associated_patient_ids
     
     if current_user.role.name == 'Patient' and current_user.id != patient_id:
         abort(403)
+
+    if current_user.role.name == 'Doctor':
+        allowed_pids = get_doctor_associated_patient_ids(current_user.id)
+        if patient_id not in allowed_pids:
+            abort(403)
 
     patient = get_patient(patient_id)
 

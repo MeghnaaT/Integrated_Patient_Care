@@ -18,7 +18,12 @@ consultation_bp = Blueprint('consultation', __name__)
 
 def populate_choices(form):
     """Populate dynamic choices for Patient and Doctor fields."""
-    patients = Patient.query.all()
+    from services.patient_service import get_doctor_associated_patient_ids
+    if current_user.is_authenticated and current_user.role.name == 'Doctor':
+        allowed_pids = get_doctor_associated_patient_ids(current_user.id)
+        patients = Patient.query.filter(Patient.id.in_(list(allowed_pids) if allowed_pids else [-1])).all()
+    else:
+        patients = Patient.query.all()
     doctors = Doctor.query.all()
     form.patient_id.choices = [(p.id, f"{p.full_name} (PAT100{p.id} / ID:{p.id})") for p in patients]
     form.doctor_id.choices = [(d.id, f"Dr. {d.first_name} {d.last_name}") for d in doctors]
@@ -28,6 +33,7 @@ def populate_choices(form):
 @role_required('Admin', 'Doctor')
 def add_consultation():
     """Add a new doctor consultation (matches Slide 15 mockup)."""
+    from services.patient_service import get_doctor_associated_patient_ids
     form = ConsultationForm()
     populate_choices(form)
 
@@ -40,7 +46,19 @@ def add_consultation():
             form.doctor_id.data = current_user.id
         form.consultation_date.data = datetime.date.today()
 
+    if request.method == 'POST' and current_user.role.name == 'Doctor':
+        posted_pid = request.form.get('patient_id', type=int)
+        if posted_pid:
+            allowed_pids = get_doctor_associated_patient_ids(current_user.id)
+            if posted_pid not in allowed_pids:
+                abort(403)
+
     if form.validate_on_submit():
+        if current_user.role.name == 'Doctor':
+            allowed_pids = get_doctor_associated_patient_ids(current_user.id)
+            if form.patient_id.data not in allowed_pids:
+                abort(403)
+
         consultation = create_consultation(
             patient_id=form.patient_id.data,
             doctor_id=form.doctor_id.data,
@@ -70,6 +88,12 @@ def view_summary(id: int):
     if current_user.role.name == 'Patient' and current_user.id != consultation.patient_id:
         abort(403)
 
+    if current_user.role.name == 'Doctor' and current_user.id != consultation.doctor_id:
+        from services.patient_service import get_doctor_associated_patient_ids
+        allowed_pids = get_doctor_associated_patient_ids(current_user.id)
+        if consultation.patient_id not in allowed_pids:
+            abort(403)
+
     context = {
         'title': 'Consultation Summary',
         'consultation': consultation
@@ -83,6 +107,12 @@ def consultation_history(patient_id: int):
     patient = Patient.query.get_or_404(patient_id)
     if current_user.role.name == 'Patient' and current_user.id != patient.id:
         abort(403)
+
+    if current_user.role.name == 'Doctor':
+        from services.patient_service import get_doctor_associated_patient_ids
+        allowed_pids = get_doctor_associated_patient_ids(current_user.id)
+        if patient_id not in allowed_pids:
+            abort(403)
 
     consultations = get_consultations_by_patient(patient_id)
     context = {

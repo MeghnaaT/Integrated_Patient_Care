@@ -110,6 +110,11 @@
                   <a href="{{ url_for('doctor.view_doctor_view', doctor_id=d.id) }}" class="btn btn-outline-info btn-sm" title="View Doctor Profile">
                     <i class="bi bi-eye"></i>
                   </a>
+                  {% if current_user.role.name == 'Patient' %}
+                  <a href="{{ url_for('appointment.book_appointment_view', doctor_id=d.id) }}" class="btn btn-outline-success btn-sm" title="Book Appointment">
+                    <i class="bi bi-calendar-plus me-1"></i>Book
+                  </a>
+                  {% endif %}
                   {% if current_user.role.name == 'Admin' or (current_user.role.name == 'Doctor' and current_user.id == d.id) %}
                   <a href="{{ url_for('doctor.edit_doctor_view', doctor_id=d.id) }}" class="btn btn-outline-primary btn-sm" title="Edit Doctor Profile">
                     <i class="bi bi-pencil"></i>

@@ -11,7 +11,7 @@ dashboard_analytics_bp = Blueprint('dashboard_analytics', __name__)
 
 @dashboard_analytics_bp.route('/dashboard-overview', methods=['GET'])
 @login_required
-@role_required('Admin', 'Doctor', 'Nurse', 'Pharmacist')
+@role_required('Admin')
 def executive_overview():
     """Executive Administrator Analytics Dashboard matching Milestone 4 Day 1 (Slide 4 & 7 mockups)."""
     try:
@@ -29,7 +29,7 @@ def executive_overview():
 
 @dashboard_analytics_bp.route('/dashboard-overview/data', methods=['GET'])
 @login_required
-@role_required('Admin', 'Doctor', 'Nurse', 'Pharmacist')
+@role_required('Admin')
 def executive_overview_data():
     """JSON API endpoint for real-time live refresh of charts and metric cards."""
     try:

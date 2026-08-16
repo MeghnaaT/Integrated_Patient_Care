@@ -77,11 +77,11 @@ class TestDashboards(unittest.TestCase):
         res = self.login('patient@ipcms.com', 'patient123')
         self.assertEqual(res.status_code, 200)
         self.assertIn(b'My Dashboard', res.data)
-        self.assertIn(b'Total Booked Sessions', res.data)
-        self.assertIn(b'Medical Records', res.data)
         self.assertIn(b'My Consultation Log', res.data)
         self.assertIn(b'patientStatusChart', res.data)
         self.assertIn(b'My Medical History', res.data)
+        self.assertIn(b'Book Appointment', res.data)
+        self.assertIn(b'Sessions Breakdown', res.data)
         print("OK: Patient Dashboard contains personal agenda, record history, and status charts.")
         self.logout()
 

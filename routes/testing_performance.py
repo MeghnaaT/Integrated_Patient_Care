@@ -11,7 +11,7 @@ testing_performance_bp = Blueprint('testing_performance', __name__)
 
 @testing_performance_bp.route('/testing-performance', methods=['GET'])
 @login_required
-@role_required('Admin', 'Doctor', 'Nurse', 'Pharmacist')
+@role_required('Admin')
 def testing_dashboard():
     """Testing & Performance Optimization Dashboard matching Slide 15 mockup."""
     metrics = get_performance_optimization_metrics()
@@ -24,7 +24,7 @@ def testing_dashboard():
 
 @testing_performance_bp.route('/testing-performance/run-test', methods=['POST', 'GET'])
 @login_required
-@role_required('Admin', 'Doctor', 'Nurse', 'Pharmacist')
+@role_required('Admin')
 def run_performance_test():
     """Executes live query performance benchmark and returns timing metrics in JSON."""
     try:

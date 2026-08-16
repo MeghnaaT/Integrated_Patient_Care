@@ -103,7 +103,7 @@ def dashboard():
 @doctor_bp.route('/')
 @doctor_bp.route('/list')
 @login_required
-@roles_required('Admin', 'Nurse', 'Doctor')
+@roles_required('Admin', 'Nurse', 'Doctor', 'Patient')
 def list_doctors_view():
     """Directory list of doctors with search, sort, and pagination."""
     from services.doctor_service import list_doctors

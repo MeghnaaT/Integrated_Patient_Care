@@ -108,6 +108,9 @@ def admin_feedback():
     if department_id:
         filters['department_id'] = department_id
 
+    if current_user.role.name == 'Doctor':
+        filters['doctor_id'] = current_user.id
+
     feedbacks, total = get_all_feedback(filters=filters, page=page, per_page=10)
     stats = get_feedback_satisfaction_statistics()
     doctors = Doctor.query.order_by(Doctor.last_name.asc()).all()
