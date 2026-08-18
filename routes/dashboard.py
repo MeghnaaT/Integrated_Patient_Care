@@ -34,6 +34,9 @@ def dashboard():
         'Doctor':  'doctor.dashboard',
         'Nurse':   'nurse.dashboard',
         'Patient': 'patient.dashboard',
+        'Pharmacist': 'pharmacy.dashboard',
+        'Laboratory Staff': 'laboratory.list_reports',
+        'Receptionist': 'appointment.list_appointments',
     }
 
     target = role_map.get(role_name, 'auth.login')

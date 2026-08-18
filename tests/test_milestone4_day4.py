@@ -114,9 +114,11 @@ class Milestone4Day4TestCase(unittest.TestCase):
     # -------------------------------------------------------------------------
     def test_06_performance_api_response_latency(self):
         """Performance Test: Measure REST API response time (< 300 ms target)."""
+        self.login('admin@ipcms.com', 'admin123')
         start = time.time()
         res = self.client.get('/api/v1/patients')
         elapsed_ms = (time.time() - start) * 1000.0
+        self.logout()
 
         self.assertEqual(res.status_code, 200)
         self.assertLess(elapsed_ms, 300.0, f"API response latency {elapsed_ms}ms exceeded 300ms limit")

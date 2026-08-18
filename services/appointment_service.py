@@ -36,7 +36,7 @@ def check_doctor_availability(
     """Verify if the doctor is within active hours and does not have an overlapping booking."""
     from models.doctor import Doctor
     
-    doctor = Doctor.query.get(doctor_id)
+    doctor = db.session.get(Doctor, doctor_id)
     if not doctor:
         return False, "Doctor profile not found."
 
@@ -122,6 +122,16 @@ def book_appointment(data: dict) -> Tuple[Optional[Appointment], str]:
         status=status
     )
     db.session.add(appt)
+
+    # Trigger Booking Notification
+    from services.notification_service import send_notification
+    from models.doctor import Doctor
+    doc = db.session.get(Doctor, doctor_id)
+    doc_name = f"Dr. {doc.full_name}" if doc else f"Doctor ID: {doctor_id}"
+    ts = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    msg = f"Your appointment with {doc_name} has been booked for {appt_date} at {appt_time}. Status: {status}. Created at: {ts}."
+    send_notification(patient_id, 'Appointment Reminder', msg, commit=False)
+
     db.session.commit()
     return appt, ""
 
@@ -150,12 +160,34 @@ def update_appointment(appt_id: int, data: dict) -> Tuple[Optional[Appointment],
     if not ok:
         return None, err
 
+    # Track status and scheduling modifications
+    old_date = appt.appointment_date
+    old_time = appt.appointment_time
+    old_status = appt.status
+    old_doctor_id = appt.doctor_id
+
     # Save updates
     appt.patient_id = patient_id
     appt.doctor_id = doctor_id
     appt.appointment_date = appt_date
     appt.appointment_time = appt_time
     appt.status = status
+
+    # Trigger notifications based on update type
+    rescheduled = (appt_date != old_date or appt_time != old_time or doctor_id != old_doctor_id)
+    status_changed = (status != old_status)
+
+    from services.notification_service import send_notification
+    from models.doctor import Doctor
+    doc = db.session.get(Doctor, doctor_id)
+    doc_name = f"Dr. {doc.full_name}" if doc else f"Doctor ID: {doctor_id}"
+
+    if rescheduled:
+        msg = f"Your appointment with {doc_name} has been rescheduled to {appt_date} at {appt_time}. Status: {status}."
+        send_notification(patient_id, 'Appointment Reminder', msg, commit=False)
+    elif status_changed:
+        msg = f"Your appointment with {doc_name} on {appt_date} at {appt_time} is now {status}."
+        send_notification(patient_id, 'Appointment Reminder', msg, commit=False)
 
     db.session.commit()
     return appt, ""
@@ -164,7 +196,17 @@ def update_appointment(appt_id: int, data: dict) -> Tuple[Optional[Appointment],
 def cancel_appointment(appt_id: int) -> Appointment:
     """Set the status of an appointment to Cancelled."""
     appt = Appointment.query.get_or_404(appt_id)
+    old_status = appt.status
     appt.status = 'Cancelled'
+
+    if old_status != 'Cancelled':
+        from services.notification_service import send_notification
+        from models.doctor import Doctor
+        doc = db.session.get(Doctor, appt.doctor_id)
+        doc_name = f"Dr. {doc.full_name}" if doc else f"Doctor ID: {appt.doctor_id}"
+        msg = f"Your appointment with {doc_name} on {appt.appointment_date} at {appt.appointment_time} is now Cancelled."
+        send_notification(appt.patient_id, 'Appointment Reminder', msg, commit=False)
+
     db.session.commit()
     return appt
 

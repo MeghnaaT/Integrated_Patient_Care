@@ -14,7 +14,7 @@ from models.appointment import Appointment
 from models.patient import Patient
 from models.doctor import Doctor
 from models.department import Department
-from services.report_export_service import fetch_report_data, generate_report_csv
+from services.report_export_service import fetch_report_data, generate_report_csv, generate_report_excel
 
 reports_bp = Blueprint('reports', __name__)
 
@@ -227,12 +227,12 @@ def export_excel():
         per_page=10000
     )
 
-    csv_data = generate_report_csv(report_type, report_result)
-    filename = f"IPCMS_{report_type}_report_{datetime.date.today()}.xls"
+    excel_data = generate_report_excel(report_type, report_result)
+    filename = f"IPCMS_{report_type}_report_{datetime.date.today()}.xlsx"
 
     return Response(
-        csv_data,
-        mimetype="application/vnd.ms-excel",
+        excel_data,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
 

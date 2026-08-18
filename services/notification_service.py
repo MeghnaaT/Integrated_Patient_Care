@@ -34,10 +34,33 @@ def list_notifications(patient_id: Optional[int] = None) -> List[Notification]:
     return query.order_by(Notification.date_time.desc()).all()
 
 
-def send_notification(patient_id: int, notification_type: str, message: str, delivery_method: str = 'In-App') -> Notification:
+def send_notification(patient_id: int, notification_type: str, message: str, delivery_method: str = 'In-App', commit: bool = True) -> Notification:
     """Creates and dispatches a notification, maintaining delivery success tracking."""
+    # Prevent duplicate check in current session
+    for obj in db.session.new:
+        if isinstance(obj, Notification) and obj.patient_id == patient_id and obj.type == notification_type and obj.message == message:
+            return obj
+
+    # Prevent duplicate check in recently committed database
+    now_local = datetime.datetime.now()
+    now_utc = datetime.datetime.utcnow()
+    recent = Notification.query.filter(
+        Notification.patient_id == patient_id,
+        Notification.type == notification_type,
+        Notification.message == message
+    ).filter(
+        (Notification.created_at >= now_utc - datetime.timedelta(seconds=10)) |
+        (Notification.created_at >= now_local - datetime.timedelta(seconds=10))
+    ).first()
+    if recent:
+        return recent
+
+    # Robust unique code generation
     count = Notification.query.count() + 1001
     code = f"NOT{count}"
+    while Notification.query.filter_by(notification_code=code).first() is not None:
+        count += 1
+        code = f"NOT{count}"
 
     n = Notification(
         notification_code=code,
@@ -50,7 +73,10 @@ def send_notification(patient_id: int, notification_type: str, message: str, del
         is_read=False
     )
     db.session.add(n)
-    db.session.commit()
+    if commit:
+        db.session.commit()
+    else:
+        db.session.flush()
     return n
 
 

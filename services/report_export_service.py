@@ -376,3 +376,75 @@ def generate_report_csv(report_type: str, report_data: Dict[str, Any]) -> str:
         writer.writerow([row.get(h, '') for h in headers])
 
     return output.getvalue()
+
+
+def generate_report_excel(report_type: str, report_data: Dict[str, Any]) -> bytes:
+    """Generates a genuine styled XLSX bytes output for the report."""
+    import openpyxl
+    from openpyxl.styles import Font, Alignment, PatternFill
+    
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = f"{report_type.title()} Report"
+    
+    rows = report_data.get('rows', [])
+    if not rows:
+        ws.cell(row=1, column=1, value="No data available for this report filter")
+        fp = io.BytesIO()
+        wb.save(fp)
+        return fp.getvalue()
+        
+    headers = list(rows[0].keys())
+    
+    # Title Block
+    ws.merge_cells('A1:G1')
+    title_cell = ws['A1']
+    title_cell.value = f"Integrated Patient Care Management System - {report_type.title()} Report"
+    title_cell.font = Font(name='Arial', size=14, bold=True, color='FFFFFF')
+    title_cell.fill = PatternFill(start_color='1F4E78', end_color='1F4E78', fill_type='solid')
+    title_cell.alignment = Alignment(horizontal='center')
+    ws.row_dimensions[1].height = 30
+    
+    # Header Row
+    header_font = Font(name='Arial', size=11, bold=True, color='FFFFFF')
+    header_fill = PatternFill(start_color='2C3E50', end_color='2C3E50', fill_type='solid')
+    header_align = Alignment(horizontal='center', vertical='center', wrap_text=True)
+    ws.row_dimensions[3].height = 24
+    
+    for col_idx, h in enumerate(headers, 1):
+        cell = ws.cell(row=3, column=col_idx)
+        cell.value = h.replace('_', ' ').title()
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = header_align
+        
+    # Data Rows
+    data_font = Font(name='Arial', size=10)
+    data_align = Alignment(vertical='center')
+    for row_idx, row_data in enumerate(rows, 4):
+        ws.row_dimensions[row_idx].height = 20
+        for col_idx, h in enumerate(headers, 1):
+            cell = ws.cell(row=row_idx, column=col_idx)
+            val = row_data.get(h, '')
+            if isinstance(val, (int, float)):
+                cell.value = val
+                cell.number_format = '#,##0'
+            else:
+                cell.value = str(val)
+            cell.font = data_font
+            cell.alignment = data_align
+            
+    # Auto-adjust Column Widths
+    for col in ws.columns:
+        max_len = 0
+        col_letter = openpyxl.utils.get_column_letter(col[0].column)
+        for cell in col:
+            if cell.row == 1:
+                continue
+            if cell.value:
+                max_len = max(max_len, len(str(cell.value)))
+        ws.column_dimensions[col_letter].width = max(max_len + 3, 12)
+        
+    fp = io.BytesIO()
+    wb.save(fp)
+    return fp.getvalue()

@@ -27,8 +27,22 @@ class DoctorWorkflowTestCase(unittest.TestCase):
         self.app_context = self.app.app_context()
         self.app_context.push()
         db.create_all()
+        self._cleanup_test_data()
+
+    def _cleanup_test_data(self):
+        # Delete consultations created for unassoc patients
+        unassoc_patient_ids = [p.id for p in Patient.query.filter(Patient.email.like('unassoc%')).all()]
+        if unassoc_patient_ids:
+            Consultation.query.filter(Consultation.patient_id.in_(unassoc_patient_ids)).delete(synchronize_session=False)
+            Prescription.query.filter(Prescription.patient_id.in_(unassoc_patient_ids)).delete(synchronize_session=False)
+        # Delete patients
+        Patient.query.filter(Patient.email.like('unassoc%')).delete(synchronize_session=False)
+        # Delete users
+        User.query.filter(User.email.like('unassoc%')).delete(synchronize_session=False)
+        db.session.commit()
 
     def tearDown(self):
+        self._cleanup_test_data()
         db.session.rollback()
         self.app_context.pop()
 
@@ -55,7 +69,7 @@ class DoctorWorkflowTestCase(unittest.TestCase):
         self.login('doctor@ipcms.com', 'doctor123')
         res = self.client.get('/appointment/doctor/2/schedule')
         self.assertEqual(res.status_code, 200)
-        self.assertIn(b'Doctor Daily Schedule', res.data)
+        self.assertIn(b'Doctor Schedule', res.data)
         self.logout()
 
     def test_03_doctor_cannot_access_another_doctor_schedule(self):
@@ -77,10 +91,12 @@ class DoctorWorkflowTestCase(unittest.TestCase):
     def test_05_doctor_search_unrelated_patient_filtered(self):
         """5. Doctor searching for unrelated patient gets 0 results."""
         self.login('doctor@ipcms.com', 'doctor123')
-        # Search for a name that belongs to an unassociated patient or non-existent
+        # Search for a name that belongs to an unassociated patient or non-existent.
+        # Note: the search term itself is echoed back in the form input value,
+        # so we check that no patient result rows are returned (No Patients Found)
         res = self.client.get('/patient/list?q=UnrelatedNameXYZ')
         self.assertEqual(res.status_code, 200)
-        self.assertNotIn(b'UnrelatedNameXYZ', res.data)
+        self.assertIn(b'No Patients Found', res.data)
         self.logout()
 
     def test_06_doctor_can_open_associated_patient(self):

@@ -72,8 +72,19 @@ class Milestone3TestCase(unittest.TestCase):
         self.assertIsNotNone(found_bill)
         self.assertEqual(found_bill.id, bill.id)
 
+    def login(self, email, password):
+        return self.client.post('/auth/login', data={
+            'email': email,
+            'password': password,
+            'remember_me': False
+        }, follow_redirects=True)
+
+    def logout(self):
+        return self.client.get('/auth/logout', follow_redirects=True)
+
     def test_04_rest_api_endpoints(self):
         """Test Day 4 REST API endpoints and response time under 300 ms."""
+        self.login('admin@ipcms.com', 'admin123')
         start = time.time()
         res = self.client.get('/api/v1/patients')
         elapsed_ms = (time.time() - start) * 1000
@@ -88,6 +99,7 @@ class Milestone3TestCase(unittest.TestCase):
 
         res3 = self.client.get('/api/v1/billing')
         self.assertEqual(res3.status_code, 200)
+        self.logout()
 
     def test_05_notification_engine(self):
         """Test Day 5 Notification dispatch engine and delivery success rate."""

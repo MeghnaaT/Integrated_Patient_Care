@@ -74,7 +74,7 @@ class Milestone4Day2TestCase(unittest.TestCase):
         # Test Excel export endpoint
         res_xls = self.client.get('/reports/export/excel?report_type=billing')
         self.assertEqual(res_xls.status_code, 200)
-        self.assertIn('application/vnd.ms-excel', res_xls.content_type)
+        self.assertIn('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', res_xls.content_type)
 
         # Test PDF print endpoint
         res_pdf = self.client.get('/reports/export/pdf?report_type=consultation')

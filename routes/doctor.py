@@ -40,7 +40,7 @@ def dashboard():
     from models.medical_record import MedicalRecord
     import datetime
 
-    doctor = Doctor.query.get(current_user.id)
+    doctor = db.session.get(Doctor, current_user.id)
     today = datetime.date.today()
 
     # Cards statistics specific to this doctor

@@ -109,7 +109,7 @@ def dashboard():
     from models.feedback import Feedback
     import datetime
 
-    patient = Patient.query.get(current_user.id)
+    patient = db.session.get(Patient, current_user.id)
     today = datetime.date.today()
 
     # Cards statistics specific to this patient

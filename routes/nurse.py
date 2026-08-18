@@ -40,7 +40,7 @@ def dashboard():
     from models.nurse import Nurse
     import datetime
 
-    nurse = Nurse.query.get(current_user.id)
+    nurse = db.session.get(Nurse, current_user.id)
     today = datetime.date.today()
 
     # Cards statistics

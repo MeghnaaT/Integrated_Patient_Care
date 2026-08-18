@@ -209,9 +209,9 @@ class TestDoctorCRUD(unittest.TestCase):
         res = self.login('patient@ipcms.com', 'patient123')
         self.assertIn(b'My Dashboard', res.data)
 
-        # Patients CANNOT view doctor list
+        # Patients CAN view doctor list (needed for booking appointments)
         res = self.client.get('/doctor/list')
-        self.assertEqual(res.status_code, 403)
+        self.assertEqual(res.status_code, 200)
 
         # Patients CAN view doctor profiles
         res = self.client.get(f'/doctor/view/{doc.id}')
@@ -224,7 +224,7 @@ class TestDoctorCRUD(unittest.TestCase):
         # Patients CANNOT delete doctors
         res = self.client.post(f'/doctor/delete/{doc.id}')
         self.assertEqual(res.status_code, 403)
-        print("OK: Verified Patient permissions (View profile allowed, CRUD forbidden).")
+        print("OK: Verified Patient permissions (View list and profile allowed, CRUD forbidden).")
 
 if __name__ == '__main__':
     unittest.main()

@@ -29,12 +29,21 @@ def create_prescription(patient_id: int, doctor_id: int, prescription_date, spec
             )
             db.session.add(p_item)
 
+    # Trigger Prescription Notification
+    from services.notification_service import send_notification
+    from models.doctor import Doctor
+    doctor = db.session.get(Doctor, doctor_id)
+    doc_info = f"Dr. {doctor.full_name}" if doctor else f"Doctor ID: {doctor_id}"
+    date_str = prescription_date.strftime('%Y-%m-%d') if hasattr(prescription_date, 'strftime') else prescription_date
+    msg = f"Your new prescription has been created by {doc_info} on {date_str}. Instructions: {special_instructions}."
+    send_notification(patient_id, 'Prescription Ready', msg, commit=False)
+
     db.session.commit()
     return prescription
 
 def get_prescription_by_id(prescription_id: int) -> Optional[Prescription]:
     """Retrieve prescription by ID."""
-    return Prescription.query.get(prescription_id)
+    return db.session.get(Prescription, prescription_id)
 
 def get_prescriptions_by_patient(patient_id: int) -> List[Prescription]:
     """Get all prescriptions for a patient."""

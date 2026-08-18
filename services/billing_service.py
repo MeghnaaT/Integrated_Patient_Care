@@ -30,9 +30,12 @@ def generate_bill_for_patient(patient_id: int, payment_method: str = 'UPI', tran
     sub_total = consultation_fee + lab_fee + pharmacy_fee + other_charges
     total_amount = sub_total - discount + tax_amount
 
-    # Create bill number
+    # Create bill number robustly to avoid unique key conflicts during tests
     count = Bill.query.count() + 1001
     bill_number = f"BILL{count}"
+    while Bill.query.filter_by(bill_number=bill_number).first() is not None:
+        count += 1
+        bill_number = f"BILL{count}"
 
     bill = Bill(
         bill_number=bill_number,

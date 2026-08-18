@@ -29,7 +29,7 @@ class TestPatientCRUD(unittest.TestCase):
 
     def tearDown(self):
         from models.user import User
-        u = User.query.get(4)
+        u = db.session.get(User, 4)
         if u:
             u.is_active = True
             db.session.commit()

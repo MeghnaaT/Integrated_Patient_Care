@@ -11,6 +11,7 @@ from forms.billing_forms import PatientBillingForm
 from services.billing_service import (
     generate_bill_for_patient, get_bill_by_id_or_number, list_billing_history
 )
+from database.connection import db
 from models.patient import Patient
 from models.billing import Bill
 
@@ -28,11 +29,11 @@ def patient_billing():
     patient_query = request.args.get('patient_id', 'P1001').strip()
     # Resolve Patient
     if patient_query.isdigit():
-        target_patient = Patient.query.get(int(patient_query))
+        target_patient = db.session.get(Patient, int(patient_query))
     if not target_patient and patient_query.startswith('P'):
         pid = patient_query.replace('P', '').replace('PAT', '')
         if pid.isdigit():
-            target_patient = Patient.query.get(int(pid))
+            target_patient = db.session.get(Patient, int(pid))
     if not target_patient:
         target_patient = Patient.query.filter_by(id=4).first() # Fallback to Rahul Kumar
 
@@ -44,11 +45,11 @@ def patient_billing():
             pid = form.patient_id.data.strip()
             p_obj = None
             if pid.isdigit():
-                p_obj = Patient.query.get(int(pid))
+                p_obj = db.session.get(Patient, int(pid))
             elif pid.upper().startswith('P'):
                 clean_id = pid.upper().replace('PAT', '').replace('P', '')
                 if clean_id.isdigit():
-                    p_obj = Patient.query.get(int(clean_id))
+                    p_obj = db.session.get(Patient, int(clean_id))
             
             if not p_obj:
                 p_obj = target_patient or Patient.query.first()

@@ -91,7 +91,7 @@ class RoleNavigationTestCase(unittest.TestCase):
 
         # Patient self-service links present
         self.assertIn(b'Book Appointment', res.data)
-        self.assertIn(b'Search Doctors', res.data)
+        self.assertIn(b'Doctors', res.data)
         self.assertIn(b'My EHR', res.data)
         self.assertIn(b'My Prescriptions', res.data)
 

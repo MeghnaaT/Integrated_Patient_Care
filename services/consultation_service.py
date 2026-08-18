@@ -24,7 +24,7 @@ def create_consultation(patient_id: int, doctor_id: int, consultation_date, symp
 
 def get_consultation_by_id(consultation_id: int) -> Optional[Consultation]:
     """Retrieve consultation by ID."""
-    return Consultation.query.get(consultation_id)
+    return db.session.get(Consultation, consultation_id)
 
 def get_consultations_by_patient(patient_id: int) -> List[Consultation]:
     """Get all consultations for a patient, ordered by date descending."""
